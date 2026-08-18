@@ -27,6 +27,12 @@ public sealed class Match
     public IReadOnlyList<Throw> Throws =>
         _throws.OrderBy(t => t.RoundNumber).ThenBy(t => SeatOf(t.ParticipantId)).ToList();
 
+    /// <summary>Навигация для EF Core: содержимое приватного списка без сортировки.</summary>
+    public IReadOnlyCollection<MatchParticipant> AllParticipants => _participants;
+
+    /// <summary>Навигация для EF Core: содержимое приватного списка без сортировки.</summary>
+    public IReadOnlyCollection<Throw> AllThrows => _throws;
+
     public int CurrentRoundNumber => _throws.Count / _participants.Count + 1;
 
     public MatchParticipant? CurrentParticipant =>
