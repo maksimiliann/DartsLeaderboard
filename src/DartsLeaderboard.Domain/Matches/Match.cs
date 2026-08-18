@@ -1,4 +1,5 @@
 using DartsLeaderboard.Domain.Common;
+using DartsLeaderboard.Domain.Matches.Rules;
 
 namespace DartsLeaderboard.Domain.Matches;
 
@@ -32,6 +33,8 @@ public sealed class Match
         Status == MatchStatus.InProgress
             ? Participants[_throws.Count % _participants.Count]
             : null;
+
+    public IGameRules Rules => GameRules.For(this);
 
     public static Result<Match> Start(MatchSettings settings, IReadOnlyList<int> playerIds, DateTimeOffset now)
     {
