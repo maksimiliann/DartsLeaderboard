@@ -36,6 +36,78 @@ public sealed class Match
 
     public IGameRules Rules => GameRules.For(this);
 
+    public int CompletedRoundCount => _throws.Count == 0 ? 0 : _throws.Max(t => t.RoundNumber);
+
+    public Result<Throw> RecordThrow(int points, DateTimeOffset now)
+    {
+        if (Status != MatchStatus.InProgress)
+        {
+            return Result<Throw>.Failure(DomainErrorCode.MatchNotInProgress);
+        }
+
+        if (points < 0 || points > Throw.MaxPoints)
+        {
+            return Result<Throw>.Failure(DomainErrorCode.PointsOutOfRange);
+        }
+
+        var participant = CurrentParticipant!;
+        var rules = Rules;
+
+        var validation = rules.ValidateThrow(this, participant, points);
+        if (!validation.IsSuccess)
+        {
+            return Result<Throw>.Failure(validation.Error!.Value);
+        }
+
+        var recorded = new Throw(participant.Id, CurrentRoundNumber, points, now);
+        _throws.Add(recorded);
+
+        var outcome = rules.Evaluate(this);
+        if (outcome.IsFinished)
+        {
+            Status = MatchStatus.Finished;
+            FinishedAt = now;
+            WinnerParticipantId = outcome.WinnerParticipantId;
+        }
+
+        return Result<Throw>.Success(recorded);
+    }
+
+    public Result UndoLastThrow()
+    {
+        if (Status == MatchStatus.Abandoned)
+        {
+            return Result.Failure(DomainErrorCode.MatchNotInProgress);
+        }
+
+        if (_throws.Count == 0)
+        {
+            return Result.Failure(DomainErrorCode.NoThrowsToUndo);
+        }
+
+        // Throws returns a sorted copy; remove the last recorded entry from _throws by identity.
+        var last = _throws[^1];
+        _throws.Remove(last);
+
+        Status = MatchStatus.InProgress;
+        FinishedAt = null;
+        WinnerParticipantId = null;
+
+        return Result.Success();
+    }
+
+    public Result Abandon(DateTimeOffset now)
+    {
+        if (Status != MatchStatus.InProgress)
+        {
+            return Result.Failure(DomainErrorCode.MatchNotInProgress);
+        }
+
+        Status = MatchStatus.Abandoned;
+        FinishedAt = now;
+        return Result.Success();
+    }
+
     public static Result<Match> Start(MatchSettings settings, IReadOnlyList<int> playerIds, DateTimeOffset now)
     {
         var validation = settings.Validate();

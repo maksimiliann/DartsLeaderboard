@@ -46,6 +46,21 @@ internal static class MatchTestFactory
         return match;
     }
 
+    /// <summary>Записывает броски по кругу через публичный API агрегата, с проверкой правил.</summary>
+    public static Match WithThrows(this Match match, params int[] points)
+    {
+        for (var i = 0; i < points.Length; i++)
+        {
+            var result = match.RecordThrow(points[i], Start.AddMinutes(i));
+            if (!result.IsSuccess)
+            {
+                throw new InvalidOperationException($"Бросок {points[i]} отклонён: {result.Error}");
+            }
+        }
+
+        return match;
+    }
+
     private static void SetProperty(object target, string propertyName, object value) =>
         target.GetType()
             .GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance)!
