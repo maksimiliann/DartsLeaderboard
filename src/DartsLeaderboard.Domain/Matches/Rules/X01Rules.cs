@@ -1,9 +1,12 @@
+using System.Globalization;
 using DartsLeaderboard.Domain.Common;
 
 namespace DartsLeaderboard.Domain.Matches.Rules;
 
 public sealed class X01Rules : IGameRules
 {
+    private static readonly NumberFormatInfo Ru = new() { NumberDecimalSeparator = "," };
+
     private readonly int _startingScore;
 
     public X01Rules(int startingScore) => _startingScore = startingScore;
@@ -28,11 +31,35 @@ public sealed class X01Rules : IGameRules
             .Where(t => t.ParticipantId == participant.Id && t.RoundNumber <= roundNumber)
             .Sum(t => t.Points);
 
-    public IReadOnlyList<StatisticItem> BuildPlayerStatistics(Match match, MatchParticipant participant) =>
-        Array.Empty<StatisticItem>();
+    public IReadOnlyList<StatisticItem> BuildPlayerStatistics(Match match, MatchParticipant participant)
+    {
+        var items = new List<StatisticItem>
+        {
+            new("Осталось", RemainingFor(match, participant).ToString(Ru)),
+            new("Раундов", match.RoundCountOf(participant.Id).ToString(Ru))
+        };
 
-    public IReadOnlyList<StatisticItem> BuildMatchStatistics(Match match) =>
-        Array.Empty<StatisticItem>();
+        if (match.WinnerParticipantId == participant.Id)
+        {
+            items.Add(new StatisticItem("Закрыл за", match.RoundCountOf(participant.Id).ToString(Ru)));
+        }
+
+        return items;
+    }
+
+    public IReadOnlyList<StatisticItem> BuildMatchStatistics(Match match)
+    {
+        var leader = match.Participants
+            .OrderBy(p => RemainingFor(match, p))
+            .ThenBy(p => p.SeatOrder)
+            .First();
+
+        return new List<StatisticItem>
+        {
+            new("Раундов сыграно", match.CompletedRoundCount.ToString(Ru)),
+            new("Ближе всех к финишу", $"{leader.PlayerName} ({RemainingFor(match, leader)})")
+        };
+    }
 
     internal int RemainingFor(Match match, MatchParticipant participant) =>
         _startingScore - match.PointsOf(participant.Id);
