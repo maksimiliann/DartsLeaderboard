@@ -1,0 +1,19 @@
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.overline" Class="mb-2">Статистика матча</MudText>
+    @foreach (var item in Statistics)
+    {
+        <MudStack Row="true" Class="py-1">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@item.Name</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.body2"><b>@item.Value</b></MudText>
+        </MudStack>
+    }
+    @if (Statistics.Count == 0)
+    {
+        <MudText Typo="Typo.body2">Пока нет данных.</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<StatisticDto> Statistics { get; set; } = Array.Empty<StatisticDto>();
+}

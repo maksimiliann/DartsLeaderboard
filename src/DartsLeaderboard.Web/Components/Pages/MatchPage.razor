@@ -1,0 +1,128 @@
+@page "/match/{MatchId:int}"
+@using DartsLeaderboard.Application.Abstractions
+@using DartsLeaderboard.Application.Matches
+@using DartsLeaderboard.Web.Components.Match
+@implements IDisposable
+@inject GetMatchStateService GetState
+@inject RecordThrowService RecordThrow
+@inject UndoLastThrowService UndoThrow
+@inject AbandonMatchService AbandonMatch
+@inject IMatchNotifier Notifier
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Матч #@MatchId</PageTitle>
+
+@if (_state is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+        <MudText Typo="Typo.h5">@_state.ModeTitle</MudText>
+        <MudChip T="string" Size="Size.Small">Матч #@_state.MatchId</MudChip>
+        <MudChip T="string" Size="Size.Small">Раунд @_state.CurrentRoundNumber</MudChip>
+        @if (_state.IsInProgress)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary">Бросает: @_state.CurrentPlayerName</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                @_state.StatusTitle@(_state.WinnerPlayerName is null ? "" : $": {_state.WinnerPlayerName}")
+            </MudChip>
+        }
+        <MudSpacer />
+        @if (_state.IsInProgress)
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="Abandon">Прервать матч</MudButton>
+        }
+    </MudStack>
+
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-2">
+                <MatchScoreGrid State="_state" />
+            </MudPaper>
+
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-3">
+                <RoundInput Disabled="@(!_state.IsInProgress)" PlayerName="@_state.CurrentPlayerName"
+                            OnSubmit="Record" />
+                <MudButton Variant="Variant.Outlined" OnClick="Undo">Отменить бросок</MudButton>
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MatchStatsPanel Statistics="_state.MatchStatistics" />
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private MatchStateDto? _state;
+    private IDisposable? _subscription;
+
+    [Parameter] public int MatchId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Reload();
+        _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(async () =>
+        {
+            await Reload();
+            StateHasChanged();
+        }));
+    }
+
+    private async Task Reload()
+    {
+        var result = await GetState.ExecuteAsync(MatchId);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        _state = result.Value;
+    }
+
+    private async Task Record(int points)
+    {
+        var result = await RecordThrow.ExecuteAsync(MatchId, points);
+        if (result.IsSuccess)
+        {
+            _state = result.Value;
+            return;
+        }
+
+        Snackbar.Add(result.ErrorMessage!, Severity.Error);
+        await Reload();
+    }
+
+    private async Task Undo()
+    {
+        var result = await UndoThrow.ExecuteAsync(MatchId);
+        if (result.IsSuccess)
+        {
+            _state = result.Value;
+            return;
+        }
+
+        Snackbar.Add(result.ErrorMessage!, Severity.Warning);
+    }
+
+    private async Task Abandon()
+    {
+        var result = await AbandonMatch.ExecuteAsync(MatchId);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+            return;
+        }
+
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose() => _subscription?.Dispose();
+}

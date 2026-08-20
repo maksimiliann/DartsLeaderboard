@@ -1,0 +1,68 @@
+<MudSimpleTable Dense="true" Bordered="true" Striped="false" Style="overflow-x: auto">
+    <thead>
+        <tr>
+            <th style="width: 96px">Раунд</th>
+            @foreach (var column in State.Columns)
+            {
+                <th class="@(column.ParticipantId == State.CurrentParticipantId ? "mud-primary-text" : null)">
+                    @column.PlayerName
+                </th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in State.Rows)
+        {
+            <tr>
+                <td>@row.RoundNumber</td>
+                @for (var index = 0; index < row.Cells.Count; index++)
+                {
+                    var cell = row.Cells[index];
+                    var isCurrent = State.IsInProgress
+                        && row.RoundNumber == State.CurrentRoundNumber
+                        && State.Columns[index].ParticipantId == State.CurrentParticipantId;
+
+                    <td class="@(isCurrent ? "mud-theme-primary" : null)" style="text-align: center">
+                        @if (cell.Points is not null)
+                        {
+                            <MudText Typo="Typo.body1"><b>@cell.Points</b></MudText>
+                            @if (cell.RunningValue is not null)
+                            {
+                                <MudText Typo="Typo.caption">@cell.RunningValue</MudText>
+                            }
+                        }
+                        else if (isCurrent)
+                        {
+                            <MudText Typo="Typo.caption">ходит</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption">—</MudText>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        @foreach (var name in StatisticNames)
+        {
+            <tr>
+                <td>@name</td>
+                @foreach (var column in State.Columns)
+                {
+                    <td style="text-align: center">
+                        @(column.Statistics.FirstOrDefault(s => s.Name == name)?.Value ?? "—")
+                    </td>
+                }
+            </tr>
+        }
+    </tfoot>
+</MudSimpleTable>
+
+@code {
+    [Parameter, EditorRequired] public MatchStateDto State { get; set; } = default!;
+
+    private IEnumerable<string> StatisticNames =>
+        State.Columns.SelectMany(c => c.Statistics.Select(s => s.Name)).Distinct();
+}
