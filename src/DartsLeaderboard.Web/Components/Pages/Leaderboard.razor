@@ -1,0 +1,78 @@
+@page "/"
+@using DartsLeaderboard.Application.Reports
+@inject GetLeaderboardService LeaderboardService
+@inject GetMatchListService MatchListService
+@inject NavigationManager Navigation
+
+<PageTitle>Лидерборд</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h5">Лидерборд</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Navigation.NavigateTo("/match/new"))">
+        Новый матч
+    </MudButton>
+</MudStack>
+
+<MudPaper Class="pa-2 mb-6">
+    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
+        <HeaderContent>
+            <MudTh>Игрок</MudTh>
+            <MudTh>Победы</MudTh>
+            <MudTh>Матчей</MudTh>
+            <MudTh>Доля побед</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Игрок">@context.PlayerName</MudTd>
+            <MudTd DataLabel="Победы">@context.Wins</MudTd>
+            <MudTd DataLabel="Матчей">@context.MatchesPlayed</MudTd>
+            <MudTd DataLabel="Доля побед">@context.WinRate.ToString("P0")</MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2">Матчей пока нет — начни первый.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@if (_unfinished.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-2">Незавершённые матчи</MudText>
+    <MudPaper Class="pa-2">
+        <MudTable Items="_unfinished" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Матч</MudTh>
+                <MudTh>Режим</MudTh>
+                <MudTh>Игроки</MudTh>
+                <MudTh>Начат</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Матч">#@context.MatchId</MudTd>
+                <MudTd DataLabel="Режим">@context.ModeTitle</MudTd>
+                <MudTd DataLabel="Игроки">@context.Participants</MudTd>
+                <MudTd DataLabel="Начат">@context.StartedAt.LocalDateTime.ToString("dd.MM HH:mm")</MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                               OnClick="@(() => Navigation.NavigateTo($"/match/{context.MatchId}"))">
+                        Продолжить
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private IReadOnlyList<LeaderboardRowDto> _rows = Array.Empty<LeaderboardRowDto>();
+    private IReadOnlyList<MatchListItemDto> _unfinished = Array.Empty<MatchListItemDto>();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rows = await LeaderboardService.ExecuteAsync();
+        _unfinished = await MatchListService.ExecuteAsync(MatchListFilter.InProgress);
+        _loading = false;
+    }
+}
