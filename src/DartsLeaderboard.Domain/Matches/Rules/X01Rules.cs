@@ -11,7 +11,7 @@ public sealed class X01Rules : IGameRules
 
     public X01Rules(int startingScore) => _startingScore = startingScore;
 
-    public string Title => $"{_startingScore} на очки";
+    public string Title => GameRules.TitleFor(GameMode.X01, _startingScore, null);
 
     public bool SupportsTrendChart => false;
 

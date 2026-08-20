@@ -12,7 +12,7 @@ public sealed class HighestTotalRules : IGameRules
 
     public HighestTotalRules(int roundLimit) => _roundLimit = roundLimit;
 
-    public string Title => $"Максимум за {_roundLimit} раундов";
+    public string Title => GameRules.TitleFor(GameMode.HighestTotal, null, _roundLimit);
 
     public bool SupportsTrendChart => true;
 

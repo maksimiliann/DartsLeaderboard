@@ -8,4 +8,11 @@ public static class GameRules
         GameMode.HighestTotal => new HighestTotalRules(match.RoundLimit!.Value),
         _ => throw new NotSupportedException($"Режим {match.Mode} не поддерживается")
     };
+
+    public static string TitleFor(GameMode mode, int? startingScore, int? roundLimit) => mode switch
+    {
+        GameMode.X01 => $"{startingScore} на очки",
+        GameMode.HighestTotal => $"Максимум за {roundLimit} раундов",
+        _ => "Неизвестный режим"
+    };
 }
