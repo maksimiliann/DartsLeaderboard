@@ -1,0 +1,114 @@
+@page "/players"
+@using DartsLeaderboard.Application.Players
+@inject GetPlayersService GetPlayers
+@inject AddPlayerService AddPlayer
+@inject RenamePlayerService RenamePlayer
+@inject SetPlayerArchivedService SetArchived
+@inject ISnackbar Snackbar
+
+<PageTitle>Игроки</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Игроки</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudTextField @bind-Value="_newName" Label="Имя игрока" Immediate="true"
+                      OnKeyDown="@OnNewNameKeyDown" MaxLength="50" Style="max-width: 280px" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Добавить</MudButton>
+        <MudSpacer />
+        <MudSwitch T="bool" Value="_showArchived" ValueChanged="ToggleArchived" Color="Color.Primary">
+            Показывать архивных
+        </MudSwitch>
+    </MudStack>
+</MudPaper>
+
+<MudPaper Class="pa-2">
+    <MudTable Items="_players" Dense="true" Hover="true" Loading="_loading">
+        <HeaderContent>
+            <MudTh>Имя</MudTh>
+            <MudTh>Статус</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Имя">
+                <MudTextField T="string" Value="@context.Name" Immediate="false"
+                              ValueChanged="@(name => Rename(context.Id, name))" Underline="false" />
+            </MudTd>
+            <MudTd DataLabel="Статус">@(context.IsArchived ? "В архиве" : "Активен")</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Variant="Variant.Text"
+                           OnClick="@(() => Archive(context.Id, !context.IsArchived))">
+                    @(context.IsArchived ? "Вернуть" : "В архив")
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2">Пока никого нет — добавь первого игрока.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private IReadOnlyList<PlayerDto> _players = Array.Empty<PlayerDto>();
+    private string _newName = string.Empty;
+    private bool _showArchived;
+    private bool _loading = true;
+
+    protected override Task OnInitializedAsync() => Reload();
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _players = await GetPlayers.ExecuteAsync(_showArchived);
+        _loading = false;
+    }
+
+    private async Task ToggleArchived(bool value)
+    {
+        _showArchived = value;
+        await Reload();
+    }
+
+    private async Task OnNewNameKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await Add();
+        }
+    }
+
+    private async Task Add()
+    {
+        var result = await AddPlayer.ExecuteAsync(_newName);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+            return;
+        }
+
+        _newName = string.Empty;
+        await Reload();
+    }
+
+    private async Task Rename(int playerId, string name)
+    {
+        var result = await RenamePlayer.ExecuteAsync(playerId, name);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+        }
+
+        await Reload();
+    }
+
+    private async Task Archive(int playerId, bool archived)
+    {
+        var result = await SetArchived.ExecuteAsync(playerId, archived);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+        }
+
+        await Reload();
+    }
+}

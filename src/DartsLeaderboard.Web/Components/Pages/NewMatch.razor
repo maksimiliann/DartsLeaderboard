@@ -1,0 +1,137 @@
+@page "/match/new"
+@using DartsLeaderboard.Application.Matches
+@using DartsLeaderboard.Application.Players
+@inject GetPlayersService GetPlayers
+@inject StartMatchService StartMatch
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Новый матч</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Новый матч</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Режим</MudText>
+            <MudToggleGroup T="GameModeOption" Value="_mode" ValueChanged="OnModeChanged" Color="Color.Primary">
+                <MudToggleItem Value="GameModeOption.X01" Text="На очки" />
+                <MudToggleItem Value="GameModeOption.HighestTotal" Text="Максимум" />
+            </MudToggleGroup>
+
+            @if (_mode == GameModeOption.X01)
+            {
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-4">
+                    <MudSelect T="int" Label="Начальный счёт" Value="_startingScore"
+                               ValueChanged="@(value => _startingScore = value)" Style="max-width: 180px">
+                        <MudSelectItem T="int" Value="301">301</MudSelectItem>
+                        <MudSelectItem T="int" Value="501">501</MudSelectItem>
+                        <MudSelectItem T="int" Value="701">701</MudSelectItem>
+                    </MudSelect>
+                    <MudNumericField T="int" @bind-Value="_startingScore" Label="Свой счёт"
+                                     Min="1" Max="2000" Style="max-width: 160px" />
+                </MudStack>
+            }
+            else
+            {
+                <MudNumericField T="int" @bind-Value="_roundLimit" Label="Количество раундов"
+                                 Min="1" Max="50" Class="mt-4" Style="max-width: 200px" />
+            }
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Участники и порядок</MudText>
+
+            <MudList T="PlayerDto" Dense="true">
+                @foreach (var player in _players)
+                {
+                    <MudListItem T="PlayerDto">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudCheckBox T="bool" Value="_selected.Contains(player.Id)"
+                                         ValueChanged="@(value => Toggle(player.Id, value))"
+                                         Label="@player.Name" />
+                            <MudSpacer />
+                            @if (_selected.Contains(player.Id))
+                            {
+                                <MudText Typo="Typo.caption">@(_selected.IndexOf(player.Id) + 1)</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small"
+                                               OnClick="@(() => Move(player.Id, -1))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small"
+                                               OnClick="@(() => Move(player.Id, 1))" />
+                            }
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+
+            @if (_players.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-2">
+                    Сначала добавь игроков в справочнике.
+                </MudAlert>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+           Disabled="_selected.Count < 2" OnClick="Start">
+    Начать
+</MudButton>
+
+@code {
+    private IReadOnlyList<PlayerDto> _players = Array.Empty<PlayerDto>();
+    private readonly List<int> _selected = new();
+    private GameModeOption _mode = GameModeOption.X01;
+    private int _startingScore = 501;
+    private int _roundLimit = 5;
+
+    protected override async Task OnInitializedAsync() =>
+        _players = await GetPlayers.ExecuteAsync(includeArchived: false);
+
+    private void OnModeChanged(GameModeOption mode) => _mode = mode;
+
+    private void Toggle(int playerId, bool selected)
+    {
+        if (selected && !_selected.Contains(playerId))
+        {
+            _selected.Add(playerId);
+        }
+        else if (!selected)
+        {
+            _selected.Remove(playerId);
+        }
+    }
+
+    private void Move(int playerId, int offset)
+    {
+        var index = _selected.IndexOf(playerId);
+        var target = index + offset;
+        if (index < 0 || target < 0 || target >= _selected.Count)
+        {
+            return;
+        }
+
+        (_selected[index], _selected[target]) = (_selected[target], _selected[index]);
+    }
+
+    private async Task Start()
+    {
+        var request = new MatchSetupRequest(
+            _mode,
+            _mode == GameModeOption.X01 ? _startingScore : null,
+            _mode == GameModeOption.HighestTotal ? _roundLimit : null,
+            _selected.ToList());
+
+        var result = await StartMatch.ExecuteAsync(request);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+            return;
+        }
+
+        Navigation.NavigateTo($"/match/{result.Value}");
+    }
+}
