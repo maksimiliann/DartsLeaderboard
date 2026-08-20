@@ -51,6 +51,11 @@ else
                             OnSubmit="Record" />
                 <MudButton Variant="Variant.Outlined" OnClick="Undo">Отменить бросок</MudButton>
             </MudStack>
+
+            @if (_state.ShowTrendChart)
+            {
+                <ThrowTrendChart Series="_state.ChartSeries" />
+            }
         </MudItem>
         <MudItem xs="12" md="4">
             <MatchStatsPanel Statistics="_state.MatchStatistics" />

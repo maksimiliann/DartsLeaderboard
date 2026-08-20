@@ -1,0 +1,38 @@
+<MudPaper Class="pa-4 mt-3">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudText Typo="Typo.overline">Тренд по раундам</MudText>
+        <MudSpacer />
+        <MudToggleGroup T="bool" Value="_cumulative" ValueChanged="@(value => _cumulative = value)"
+                        Size="Size.Small" Color="Color.Primary">
+            <MudToggleItem Value="false" Text="Очки за раунд" />
+            <MudToggleItem Value="true" Text="Накопительно" />
+        </MudToggleGroup>
+    </MudStack>
+
+    @if (RoundCount == 0)
+    {
+        <MudText Typo="Typo.body2">Броски ещё не записаны.</MudText>
+    }
+    else
+    {
+        <MudChart T="double" ChartType="ChartType.Line" ChartSeries="ChartData" ChartLabels="Labels" Height="260px" />
+    }
+</MudPaper>
+
+@code {
+    private bool _cumulative;
+
+    [Parameter, EditorRequired] public IReadOnlyList<ChartSeriesDto> Series { get; set; } = Array.Empty<ChartSeriesDto>();
+
+    private int RoundCount => Series.Count == 0 ? 0 : Series.Max(s => s.RoundPoints.Count);
+
+    private string[] Labels => Enumerable.Range(1, RoundCount).Select(i => i.ToString()).ToArray();
+
+    private List<ChartSeries<double>> ChartData => Series
+        .Select(s => new ChartSeries<double>
+        {
+            Name = s.PlayerName,
+            Data = (_cumulative ? s.CumulativePoints : s.RoundPoints).ToArray()
+        })
+        .ToList();
+}

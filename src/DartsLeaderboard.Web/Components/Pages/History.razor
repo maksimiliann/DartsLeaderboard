@@ -1,0 +1,45 @@
+@page "/history"
+@using DartsLeaderboard.Application.Reports
+@inject GetMatchListService MatchListService
+@inject NavigationManager Navigation
+
+<PageTitle>История</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">История матчей</MudText>
+
+<MudPaper Class="pa-2">
+    <MudTable Items="_matches" Dense="true" Hover="true" Loading="_loading"
+              OnRowClick="@((TableRowClickEventArgs<MatchListItemDto> args) =>
+                  Navigation.NavigateTo($"/match/{args.Item!.MatchId}"))">
+        <HeaderContent>
+            <MudTh>Матч</MudTh>
+            <MudTh>Режим</MudTh>
+            <MudTh>Игроки</MudTh>
+            <MudTh>Победитель</MudTh>
+            <MudTh>Завершён</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Матч">#@context.MatchId</MudTd>
+            <MudTd DataLabel="Режим">@context.ModeTitle</MudTd>
+            <MudTd DataLabel="Игроки">@context.Participants</MudTd>
+            <MudTd DataLabel="Победитель">@(context.WinnerName ?? "Ничья")</MudTd>
+            <MudTd DataLabel="Завершён">
+                @(context.FinishedAt?.LocalDateTime.ToString("dd.MM.yyyy HH:mm") ?? "—")
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2">Завершённых матчей пока нет.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private IReadOnlyList<MatchListItemDto> _matches = Array.Empty<MatchListItemDto>();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _matches = await MatchListService.ExecuteAsync(MatchListFilter.Finished);
+        _loading = false;
+    }
+}
