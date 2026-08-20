@@ -1,0 +1,23 @@
+<MudPaper Class="pa-4 mb-6">
+    <MudText Typo="Typo.overline" Class="mb-2">Рекорды</MudText>
+    @foreach (var record in Records)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="py-1">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@record.Title</MudText>
+            <MudSpacer />
+            @if (record.Value is null)
+            {
+                <MudText Typo="Typo.body2">—</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body1"><b>@record.Value</b></MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@record.HolderName</MudText>
+            }
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ClubRecordDto> Records { get; set; } = Array.Empty<ClubRecordDto>();
+}

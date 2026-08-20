@@ -28,6 +28,7 @@ public class MatchStateMapperTests
         Assert.Equal("Аня", dto.CurrentPlayerName);
         Assert.False(dto.ShowTrendChart);
         Assert.Empty(dto.ChartSeries);
+        Assert.Empty(dto.Standings);
     }
 
     [Fact]
@@ -60,6 +61,13 @@ public class MatchStateMapperTests
         Assert.Equal(new double[] { 60, 40 }, dto.ChartSeries[0].RoundPoints);
         Assert.Equal(new double[] { 60, 100 }, dto.ChartSeries[0].CumulativePoints);
         Assert.Contains(dto.MatchStatistics, s => s.Name == "Лучший бросок" && s.Value == "60 · Максим");
+        Assert.Equal(2, dto.Standings.Count);
+        Assert.Equal(1, dto.Standings[0].Place);
+        Assert.Equal("Максим", dto.Standings[0].PlayerName);
+        Assert.Equal(100, dto.Standings[0].Total);
+        Assert.Equal(2, dto.Standings[1].Place);
+        Assert.Equal("Аня", dto.Standings[1].PlayerName);
+        Assert.Equal(30, dto.Standings[1].Total);
     }
 
     [Fact]

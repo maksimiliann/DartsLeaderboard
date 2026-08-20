@@ -9,4 +9,7 @@ public sealed class GetMatchListService(IMatchQueries queries)
         MatchListFilter filter,
         CancellationToken cancellationToken = default) =>
         queries.ListAsync(filter, cancellationToken);
+
+    public Task<IReadOnlyList<int>> GetLastPlayerIdsAsync(CancellationToken cancellationToken = default) =>
+        queries.GetLastParticipantPlayerIdsAsync(cancellationToken);
 }

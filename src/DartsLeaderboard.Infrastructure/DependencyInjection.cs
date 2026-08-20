@@ -17,7 +17,9 @@ public static class DependencyInjection
         services.AddScoped<IPlayerRepository, PlayerRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddScoped<ILeaderboardQueries, LeaderboardQueries>();
+        services.AddScoped<IRecordQueries, RecordQueries>();
         services.AddScoped<IMatchQueries, MatchQueries>();
+        services.AddScoped<IWinArchiveQueries, WinArchiveQueries>();
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IMatchNotifier, InMemoryMatchNotifier>();

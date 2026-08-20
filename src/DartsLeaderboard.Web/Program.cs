@@ -5,7 +5,9 @@ using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddCircuitOptions(options => options.DetailedErrors = builder.Environment.IsDevelopment());
 builder.Services.AddMudServices();
 
 var connectionString = builder.Configuration.GetConnectionString("Darts")
@@ -23,6 +25,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseAntiforgery();
-app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode(options =>
+    options.DisableWebSocketCompression = true);
 
 app.Run();

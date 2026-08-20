@@ -20,7 +20,9 @@ public class DependencyInjectionTests
         services.AddSingleton<IMatchNotifier, RecordingNotifier>();
         services.AddSingleton<IClock, FixedClock>();
         services.AddSingleton<ILeaderboardQueries, StubLeaderboardQueries>();
+        services.AddSingleton<IRecordQueries, StubRecordQueries>();
         services.AddSingleton<IMatchQueries, StubMatchQueries>();
+        services.AddSingleton<IWinArchiveQueries, StubWinArchiveQueries>();
 
         using var provider = services.BuildServiceProvider(validateScopes: true);
         using var scope = provider.CreateScope();
@@ -35,6 +37,9 @@ public class DependencyInjectionTests
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<AbandonMatchService>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetMatchStateService>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetLeaderboardService>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetRecordsService>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetMatchListService>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetWinArchiveService>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<SaveWinArchiveService>());
     }
 }

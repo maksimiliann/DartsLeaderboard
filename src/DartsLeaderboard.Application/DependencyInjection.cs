@@ -21,7 +21,10 @@ public static class DependencyInjection
         services.AddScoped<AbandonMatchService>();
 
         services.AddScoped<GetLeaderboardService>();
+        services.AddScoped<GetRecordsService>();
         services.AddScoped<GetMatchListService>();
+        services.AddScoped<GetWinArchiveService>();
+        services.AddScoped<SaveWinArchiveService>();
 
         return services;
     }

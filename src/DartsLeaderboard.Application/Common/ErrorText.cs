@@ -20,6 +20,7 @@ public static class ErrorText
         DomainErrorCode.PointsExceedRemaining => "Больше остатка: при переборе вводите 0",
         DomainErrorCode.NoThrowsToUndo => "Отменять нечего",
         DomainErrorCode.RoundAlreadyRecorded => "Раунд уже записан с другого устройства, состояние обновлено",
+        DomainErrorCode.InvalidWinArchiveCount => "Количество побед в архиве не может быть отрицательным",
         _ => "Неизвестная ошибка"
     };
 }

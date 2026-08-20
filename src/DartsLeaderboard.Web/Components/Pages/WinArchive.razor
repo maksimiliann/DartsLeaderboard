@@ -1,0 +1,89 @@
+@page "/archive"
+@using DartsLeaderboard.Application.Reports
+@inject GetWinArchiveService GetArchive
+@inject SaveWinArchiveService SaveArchive
+@inject ISnackbar Snackbar
+
+<PageTitle>Архив побед</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h5">Архив побед</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="_loading">
+        Сохранить
+    </MudButton>
+</MudStack>
+
+<MudText Typo="Typo.body2" Class="mb-3">
+    Сюда заносятся победы до запуска приложения. Они прибавляются к колонкам x01 и «Максимум» на лидерборде,
+    но не входят в число сыгранных матчей и долю побед.
+</MudText>
+
+<MudPaper Class="pa-2">
+    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
+        <HeaderContent>
+            <MudTh>Игрок</MudTh>
+            <MudTh>x01</MudTh>
+            <MudTh>Максимум</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Игрок">@context.PlayerName</MudTd>
+            <MudTd DataLabel="x01">
+                <MudNumericField T="int" Value="@context.WinsX01" Min="0"
+                                 ValueChanged="@(value => SetX01(context.PlayerId, value))"
+                                 Variant="Variant.Text" />
+            </MudTd>
+            <MudTd DataLabel="Максимум">
+                <MudNumericField T="int" Value="@context.WinsHighestTotal" Min="0"
+                                 ValueChanged="@(value => SetHighest(context.PlayerId, value))"
+                                 Variant="Variant.Text" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2">Сначала добавь игроков в справочнике.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<WinArchiveRowDto> _rows = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rows = (await GetArchive.ExecuteAsync()).ToList();
+        _loading = false;
+    }
+
+    private void SetX01(int playerId, int value)
+    {
+        var index = _rows.FindIndex(r => r.PlayerId == playerId);
+        if (index >= 0)
+        {
+            var row = _rows[index];
+            _rows[index] = row with { WinsX01 = value };
+        }
+    }
+
+    private void SetHighest(int playerId, int value)
+    {
+        var index = _rows.FindIndex(r => r.PlayerId == playerId);
+        if (index >= 0)
+        {
+            var row = _rows[index];
+            _rows[index] = row with { WinsHighestTotal = value };
+        }
+    }
+
+    private async Task Save()
+    {
+        var result = await SaveArchive.ExecuteAsync(_rows);
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add(result.ErrorMessage!, Severity.Error);
+            return;
+        }
+
+        Snackbar.Add("Архив сохранён", Severity.Success);
+    }
+}

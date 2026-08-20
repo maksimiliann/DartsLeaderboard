@@ -1,6 +1,14 @@
 namespace DartsLeaderboard.Application.Contracts;
 
-public sealed record LeaderboardRowDto(int PlayerId, string PlayerName, int Wins, int MatchesPlayed)
+public sealed record LeaderboardRowDto(
+    int PlayerId,
+    string PlayerName,
+    int WinsX01,
+    int WinsHighestTotal,
+    int MatchesPlayed,
+    int LiveWins)
 {
-    public double WinRate => MatchesPlayed == 0 ? 0 : (double)Wins / MatchesPlayed;
+    public int Wins => WinsX01 + WinsHighestTotal;
+
+    public double WinRate => MatchesPlayed == 0 ? 0 : (double)LiveWins / MatchesPlayed;
 }

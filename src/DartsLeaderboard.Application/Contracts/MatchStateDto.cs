@@ -13,6 +13,8 @@ public sealed record ChartSeriesDto(
     IReadOnlyList<double> RoundPoints,
     IReadOnlyList<double> CumulativePoints);
 
+public sealed record StandingDto(int Place, string PlayerName, int Total);
+
 public sealed record MatchStateDto(
     int MatchId,
     string ModeTitle,
@@ -26,4 +28,5 @@ public sealed record MatchStateDto(
     IReadOnlyList<MatchRowDto> Rows,
     IReadOnlyList<StatisticDto> MatchStatistics,
     bool ShowTrendChart,
-    IReadOnlyList<ChartSeriesDto> ChartSeries);
+    IReadOnlyList<ChartSeriesDto> ChartSeries,
+    IReadOnlyList<StandingDto> Standings);

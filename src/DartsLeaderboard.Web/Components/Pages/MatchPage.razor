@@ -38,6 +38,14 @@ else
         {
             <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="Abandon">Прервать матч</MudButton>
         }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => Navigation.NavigateTo("/match/new"))">
+                Новый матч
+            </MudButton>
+        }
     </MudStack>
 
     <MudGrid>
@@ -58,6 +66,10 @@ else
             }
         </MudItem>
         <MudItem xs="12" md="4">
+            @if (_state.Standings.Count > 0)
+            {
+                <MatchStandings Standings="_state.Standings" />
+            }
             <MatchStatsPanel Statistics="_state.MatchStatistics" />
         </MudItem>
     </MudGrid>
@@ -72,11 +84,18 @@ else
     protected override async Task OnInitializedAsync()
     {
         await Reload();
-        _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(async () =>
+        _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(OnMatchChangedAsync));
+    }
+
+    private async Task OnMatchChangedAsync()
+    {
+        if (_subscription is null)
         {
-            await Reload();
-            StateHasChanged();
-        }));
+            return;
+        }
+
+        await Reload();
+        StateHasChanged();
     }
 
     private async Task Reload()
@@ -119,9 +138,12 @@ else
 
     private async Task Abandon()
     {
+        Unsubscribe();
+
         var result = await AbandonMatch.ExecuteAsync(MatchId);
         if (!result.IsSuccess)
         {
+            _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(OnMatchChangedAsync));
             Snackbar.Add(result.ErrorMessage!, Severity.Error);
             return;
         }
@@ -129,5 +151,11 @@ else
         Navigation.NavigateTo("/");
     }
 
-    public void Dispose() => _subscription?.Dispose();
+    public void Dispose() => Unsubscribe();
+
+    private void Unsubscribe()
+    {
+        _subscription?.Dispose();
+        _subscription = null;
+    }
 }

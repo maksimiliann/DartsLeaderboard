@@ -43,4 +43,25 @@ public sealed class MatchQueries(DartsDbContext context) : IMatchQueries
                 m.FinishedAt))
             .ToList();
     }
+
+    public async Task<IReadOnlyList<int>> GetLastParticipantPlayerIdsAsync(CancellationToken cancellationToken)
+    {
+        var lastMatchId = await context.Matches
+            .OrderByDescending(m => m.StartedAt)
+            .ThenByDescending(m => m.Id)
+            .Select(m => (int?)m.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (lastMatchId is null)
+        {
+            return Array.Empty<int>();
+        }
+
+        return await context.Matches
+            .Where(m => m.Id == lastMatchId)
+            .SelectMany(m => m.AllParticipants)
+            .OrderBy(p => p.SeatOrder)
+            .Select(p => p.PlayerId)
+            .ToListAsync(cancellationToken);
+    }
 }

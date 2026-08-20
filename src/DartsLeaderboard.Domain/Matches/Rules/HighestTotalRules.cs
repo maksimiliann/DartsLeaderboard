@@ -64,6 +64,7 @@ public sealed class HighestTotalRules : IGameRules
     {
         var throws = match.Throws;
         var remainingRounds = Math.Max(0, _roundLimit - match.CompletedRoundCount);
+        var points = throws.Select(t => t.Points).ToList();
 
         if (throws.Count == 0)
         {
@@ -73,7 +74,7 @@ public sealed class HighestTotalRules : IGameRules
                 new("Худший бросок", NoValue),
                 new("Средний раунд", NoValue),
                 new("Осталось раундов", remainingRounds.ToString(Ru))
-            };
+            }.Concat(ThrowCounts(points)).ToList();
         }
 
         var best = throws.OrderByDescending(t => t.Points).First();
@@ -85,8 +86,40 @@ public sealed class HighestTotalRules : IGameRules
             new("Худший бросок", Describe(match, worst)),
             new("Средний раунд", throws.Average(t => t.Points).ToString("F1", Ru)),
             new("Осталось раундов", remainingRounds.ToString(Ru))
-        };
+        }.Concat(ThrowCounts(points)).ToList();
     }
+
+    public IReadOnlyList<StandingItem> BuildStandings(Match match)
+    {
+        var ordered = match.Participants
+            .Select(p => (Participant: p, Total: match.PointsOf(p.Id)))
+            .OrderByDescending(x => x.Total)
+            .ThenBy(x => x.Participant.SeatOrder)
+            .ToList();
+
+        var standings = new List<StandingItem>(ordered.Count);
+        var place = 1;
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            if (i > 0 && ordered[i].Total != ordered[i - 1].Total)
+            {
+                place = i + 1;
+            }
+
+            standings.Add(new StandingItem(place, ordered[i].Participant.PlayerName, ordered[i].Total));
+        }
+
+        return standings;
+    }
+
+    private static IReadOnlyList<StatisticItem> ThrowCounts(IReadOnlyList<int> points) =>
+        new List<StatisticItem>
+        {
+            new("Больше 100", points.Count(p => p > 100).ToString(Ru)),
+            new("Меньше 10", points.Count(p => p < 10).ToString(Ru)),
+            new("Очко", points.Count(p => p == 21).ToString(Ru)),
+            new("Классика", points.Count(p => p == 26).ToString(Ru))
+        };
 
     private static string Describe(Match match, Throw recorded)
     {

@@ -17,4 +17,6 @@ public interface IGameRules
     IReadOnlyList<StatisticItem> BuildPlayerStatistics(Match match, MatchParticipant participant);
 
     IReadOnlyList<StatisticItem> BuildMatchStatistics(Match match);
+
+    IReadOnlyList<StandingItem> BuildStandings(Match match);
 }

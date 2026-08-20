@@ -48,7 +48,8 @@ public static class MatchStateMapper
             rows,
             Map(rules.BuildMatchStatistics(match)),
             rules.SupportsTrendChart,
-            rules.SupportsTrendChart ? BuildSeries(match) : Array.Empty<ChartSeriesDto>());
+            rules.SupportsTrendChart ? BuildSeries(match) : Array.Empty<ChartSeriesDto>(),
+            rules.BuildStandings(match).Select(s => new StandingDto(s.Place, s.PlayerName, s.Total)).ToList());
     }
 
     private static IReadOnlyList<StatisticDto> Map(IReadOnlyList<StatisticItem> items) =>

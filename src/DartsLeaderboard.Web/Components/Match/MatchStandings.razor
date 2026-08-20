@@ -1,0 +1,17 @@
+<MudPaper Class="pa-4 mb-3">
+    <MudText Typo="Typo.overline" Class="mb-2">Сейчас</MudText>
+    @foreach (var row in Standings)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="py-1" Spacing="2">
+            <MudText Typo="Typo.subtitle2" Color="@(row.Place == 1 ? Color.Primary : Color.Default)"
+                     Style="width: 1.5rem">@row.Place</MudText>
+            <MudText Typo="Typo.body1">@row.PlayerName</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.subtitle1"><b>@row.Total</b></MudText>
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<StandingDto> Standings { get; set; } = Array.Empty<StandingDto>();
+}

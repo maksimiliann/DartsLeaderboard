@@ -33,11 +33,18 @@ public sealed class X01Rules : IGameRules
 
     public IReadOnlyList<StatisticItem> BuildPlayerStatistics(Match match, MatchParticipant participant)
     {
+        var remaining = RemainingFor(match, participant);
         var items = new List<StatisticItem>
         {
-            new("Осталось", RemainingFor(match, participant).ToString(Ru)),
-            new("Раундов", match.RoundCountOf(participant.Id).ToString(Ru))
+            new("Осталось", remaining.ToString(Ru))
         };
+
+        if (DoubleOutHint(remaining) is { } hint)
+        {
+            items.Add(new StatisticItem("Удвоение", hint));
+        }
+
+        items.Add(new StatisticItem("Раундов", match.RoundCountOf(participant.Id).ToString(Ru)));
 
         if (match.WinnerParticipantId == participant.Id)
         {
@@ -61,6 +68,13 @@ public sealed class X01Rules : IGameRules
         };
     }
 
+    public IReadOnlyList<StandingItem> BuildStandings(Match match) => Array.Empty<StandingItem>();
+
     internal int RemainingFor(Match match, MatchParticipant participant) =>
         _startingScore - match.PointsOf(participant.Id);
+
+    internal static string? DoubleOutHint(int remaining) =>
+        remaining == 50 || (remaining > 0 && remaining < 40 && remaining % 2 == 0)
+            ? remaining.ToString(Ru)
+            : null;
 }

@@ -15,5 +15,6 @@ public enum DomainErrorCode
     PointsOutOfRange,
     PointsExceedRemaining,
     NoThrowsToUndo,
-    RoundAlreadyRecorded
+    RoundAlreadyRecorded,
+    InvalidWinArchiveCount
 }

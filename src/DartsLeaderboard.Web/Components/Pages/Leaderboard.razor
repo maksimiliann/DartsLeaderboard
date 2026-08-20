@@ -1,6 +1,7 @@
 @page "/"
 @using DartsLeaderboard.Application.Reports
 @inject GetLeaderboardService LeaderboardService
+@inject GetRecordsService RecordsService
 @inject GetMatchListService MatchListService
 @inject NavigationManager Navigation
 
@@ -16,17 +17,21 @@
     </MudButton>
 </MudStack>
 
+<ClubRecordsPanel Records="_records" />
+
 <MudPaper Class="pa-2 mb-6">
     <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
         <HeaderContent>
             <MudTh>Игрок</MudTh>
-            <MudTh>Победы</MudTh>
+            <MudTh>x01</MudTh>
+            <MudTh>Максимум</MudTh>
             <MudTh>Матчей</MudTh>
             <MudTh>Доля побед</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Игрок">@context.PlayerName</MudTd>
-            <MudTd DataLabel="Победы">@context.Wins</MudTd>
+            <MudTd DataLabel="x01">@context.WinsX01</MudTd>
+            <MudTd DataLabel="Максимум">@context.WinsHighestTotal</MudTd>
             <MudTd DataLabel="Матчей">@context.MatchesPlayed</MudTd>
             <MudTd DataLabel="Доля побед">@context.WinRate.ToString("P0")</MudTd>
         </RowTemplate>
@@ -66,12 +71,14 @@
 
 @code {
     private IReadOnlyList<LeaderboardRowDto> _rows = Array.Empty<LeaderboardRowDto>();
+    private IReadOnlyList<ClubRecordDto> _records = Array.Empty<ClubRecordDto>();
     private IReadOnlyList<MatchListItemDto> _unfinished = Array.Empty<MatchListItemDto>();
     private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
     {
         _rows = await LeaderboardService.ExecuteAsync();
+        _records = await RecordsService.ExecuteAsync();
         _unfinished = await MatchListService.ExecuteAsync(MatchListFilter.InProgress);
         _loading = false;
     }
