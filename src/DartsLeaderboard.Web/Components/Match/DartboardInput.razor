@@ -15,84 +15,83 @@
         }
     </MudStack>
 
-    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3">
-        <MudStack Spacing="2" Class="dartboard-actions">
-            <MudButton Variant="Variant.Outlined" Disabled="Disabled" OnClick="Miss"
-                       Style="width: 100%">Мимо</MudButton>
-            <MudButton Variant="Variant.Text" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart"
-                       Style="width: 100%">
+    <MudStack Spacing="3">
+        <svg class="dartboard @(Disabled ? "dartboard-disabled" : null)"
+             viewBox="0 0 @((int)DartboardLayout.ViewBox) @((int)DartboardLayout.ViewBox)"
+             role="img" aria-label="Мишень для ввода дротиков">
+            @foreach (var slice in MissSlices)
+            {
+                <path class="@MissSliceClass(slice.Id, slice.SectorIndex)"
+                      d="@slice.Path"
+                      data-dart="@slice.Id"
+                      @onclick="() => Hit(DartboardScoring.Miss, slice.Id)">
+                    <title>Мимо</title>
+                </path>
+            }
+
+            @foreach (var slice in Slices)
+            {
+                <path class="@SliceClass(slice.Id, slice.SectorIndex, slice.Ring)"
+                      d="@slice.Path"
+                      data-dart="@slice.Id"
+                      @onclick="() => Hit(slice.Dart, slice.Id)">
+                    <title>@slice.Dart.Label · @slice.Dart.Points</title>
+                </path>
+            }
+
+            @foreach (var number in Numbers)
+            {
+                <SvgText Class="dartboard-number" X="@number.X" Y="@number.Y">@number.Sector</SvgText>
+            }
+
+            <circle class="@SliceClass("25", 1, DartboardRing.Double)"
+                    cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R25)"
+                    data-dart="25"
+                    @onclick="@(() => Hit(DartboardScoring.OuterBull, "25"))">
+                <title>25</title>
+            </circle>
+            <circle class="@SliceClass("50", 0, DartboardRing.Double)"
+                    cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R50)"
+                    data-dart="50"
+                    @onclick="@(() => Hit(DartboardScoring.InnerBull, "50"))">
+                <title>50</title>
+            </circle>
+
+            @foreach (var marker in HitMarkers)
+            {
+                <circle class="dartboard-hit" data-hit="@marker.Number"
+                        cx="@marker.X" cy="@marker.Y" r="6.5"
+                        fill="#e53935" stroke="#ffffff" stroke-width="1.25">
+                    <title>Дротик @marker.Number</title>
+                </circle>
+                <SvgText Class="dartboard-hit-label" X="@marker.X" Y="@marker.Y" Fill="#ffffff">@marker.Number</SvgText>
+            }
+        </svg>
+
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="dartboard-actions">
+            <MudButton Variant="Variant.Text" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart">
                 Отменить дротик
+            </MudButton>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" OnClick="OnUndoThrow">
+                Отменить бросок
             </MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        Disabled="@(Disabled || _visit.Darts.Count == 0)"
-                       data-testid="submit-visit" OnClick="SubmitVisit"
-                       Style="width: 100%">
-                Записать визит
-            </MudButton>
-            <MudButton Variant="Variant.Outlined" OnClick="OnUndoThrow"
-                       Style="width: 100%">
-                Отменить бросок
+                       data-testid="submit-visit" OnClick="SubmitVisit">
+                Записать бросок
             </MudButton>
         </MudStack>
-
-    <svg class="dartboard @(Disabled ? "dartboard-disabled" : null)"
-         viewBox="0 0 @((int)DartboardLayout.ViewBox) @((int)DartboardLayout.ViewBox)"
-         role="img" aria-label="Мишень для ввода дротиков">
-        @foreach (var slice in Slices)
-        {
-            <path class="@SliceClass(slice.Id, slice.SectorIndex, slice.Ring)"
-                  d="@slice.Path"
-                  data-dart="@slice.Id"
-                  @onclick="() => Hit(slice.Dart, slice.Id)">
-                <title>@slice.Dart.Label · @slice.Dart.Points</title>
-            </path>
-        }
-
-        @foreach (var number in Numbers)
-        {
-            <SvgText Class="dartboard-number" X="@number.X" Y="@number.Y">@number.Sector</SvgText>
-        }
-
-        <circle class="@SliceClass("25", 1, DartboardRing.Double)"
-                cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R25)"
-                data-dart="25"
-                @onclick="@(() => Hit(DartboardScoring.OuterBull, "25"))">
-            <title>25</title>
-        </circle>
-        <circle class="@SliceClass("50", 0, DartboardRing.Double)"
-                cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R50)"
-                data-dart="50"
-                @onclick="@(() => Hit(DartboardScoring.InnerBull, "50"))">
-            <title>50</title>
-        </circle>
-
-        <SvgText Class="dartboard-ring-label dartboard-ring-label-on-color" X="@F(DartboardLayout.Cx)" Y="@F(DartboardLayout.Cy)">50</SvgText>
-        <SvgText Class="dartboard-ring-label dartboard-ring-label-on-color" X="@F(DartboardLayout.Cx)" Y="@F(Bull25LabelY)">25</SvgText>
-
-        @foreach (var mark in RingMarks)
-        {
-            <SvgText Class="@mark.ClassName" X="@mark.X" Y="@mark.Y">@mark.Text</SvgText>
-        }
-
-        @foreach (var marker in HitMarkers)
-        {
-            <circle class="dartboard-hit" data-hit="@marker.Number"
-                    cx="@marker.X" cy="@marker.Y" r="6.5"
-                    fill="#e53935" stroke="#ffffff" stroke-width="1.25">
-                <title>Дротик @marker.Number</title>
-            </circle>
-            <SvgText Class="dartboard-hit-label" X="@marker.X" Y="@marker.Y" Fill="#ffffff">@marker.Number</SvgText>
-        }
-    </svg>
     </MudStack>
 </div>
 
 @code {
-    private static readonly (DartboardRing Ring, double Inner, double Outer, string Mark)[] Rings =
+    private static readonly (DartboardRing Ring, double Inner, double Outer, string IdPrefix)[] Rings =
     [
-        (DartboardRing.Single, DartboardLayout.R25, DartboardLayout.RSingle, "x1"),
-        (DartboardRing.Triple, DartboardLayout.RSingle, DartboardLayout.RTriple, "x3"),
-        (DartboardRing.Double, DartboardLayout.RTriple, DartboardLayout.RDouble, "x2")
+        (DartboardRing.Single, DartboardLayout.R25, DartboardLayout.RInnerSingle, "x1i"),
+        (DartboardRing.Triple, DartboardLayout.RInnerSingle, DartboardLayout.RTriple, "x3"),
+        (DartboardRing.Single, DartboardLayout.RTriple, DartboardLayout.ROuterSingle, "x1o"),
+        (DartboardRing.Double, DartboardLayout.ROuterSingle, DartboardLayout.RDouble, "x2")
     ];
 
     private DartboardVisit _visit = new();
@@ -110,8 +109,25 @@
 
     [Parameter] public EventCallback OnUndoThrow { get; set; }
 
-    private static double Bull25LabelY =>
-        DartboardLayout.Cy - (DartboardLayout.R50 + DartboardLayout.R25) / 2;
+    private IEnumerable<MissSlice> MissSlices
+    {
+        get
+        {
+            for (var index = 0; index < DartboardScoring.SectorOrder.Length; index++)
+            {
+                var sector = DartboardScoring.SectorOrder[index];
+                var center = -90 + index * 18;
+                yield return new MissSlice(
+                    $"miss-{sector}",
+                    index,
+                    DartboardLayout.RingSlice(
+                        DartboardLayout.RDouble,
+                        DartboardLayout.RMiss,
+                        center - 9,
+                        center + 9));
+            }
+        }
+    }
 
     private IEnumerable<Slice> Slices
     {
@@ -126,7 +142,7 @@
                 foreach (var ring in Rings)
                 {
                     var dart = DartboardScoring.Sector(ring.Ring, sector);
-                    var id = $"x{(int)ring.Ring}-{sector}";
+                    var id = $"{ring.IdPrefix}-{sector}";
                     yield return new Slice(
                         id,
                         index,
@@ -169,19 +185,6 @@
         }
     }
 
-    private IEnumerable<RingMark> RingMarks
-    {
-        get
-        {
-            foreach (var ring in Rings)
-            {
-                var (x, y) = DartboardLayout.Polar((ring.Inner + ring.Outer) / 2, -90);
-                var className = "dartboard-ring-label dartboard-ring-label-on-color";
-                yield return new RingMark(ring.Mark, F(x), F(y), className);
-            }
-        }
-    }
-
     protected override void OnParametersSet()
     {
         if (_trackedPlayer == PlayerName)
@@ -203,6 +206,13 @@
             : $"dartboard-slice-{parity}";
         var hit = id == _lastHitId ? " dartboard-slice-hit" : string.Empty;
         return $"dartboard-slice {tone}{hit}";
+    }
+
+    private string MissSliceClass(string id, int sectorIndex)
+    {
+        var parity = sectorIndex % 2 == 0 ? "even" : "odd";
+        var hit = id == _lastHitId ? " dartboard-slice-hit" : string.Empty;
+        return $"dartboard-slice dartboard-slice-miss-{parity}{hit}";
     }
 
     private async Task Hit(DartboardDart dart, string id)
@@ -235,8 +245,6 @@
             await SubmitVisit();
         }
     }
-
-    private Task Miss() => Hit(DartboardScoring.Miss, "miss");
 
     private void UndoDart()
     {
@@ -289,7 +297,7 @@
 
     private readonly record struct Slice(string Id, int SectorIndex, DartboardRing Ring, string Path, DartboardDart Dart);
 
-    private readonly record struct NumberLabel(int Sector, string X, string Y);
+    private readonly record struct MissSlice(string Id, int SectorIndex, string Path);
 
-    private readonly record struct RingMark(string Text, string X, string Y, string ClassName);
+    private readonly record struct NumberLabel(int Sector, string X, string Y);
 }

@@ -1,13 +1,5 @@
 <MudPaper Class="pa-4 mt-3">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-        <MudText Typo="Typo.overline">Тренд по раундам</MudText>
-        <MudSpacer />
-        <MudToggleGroup T="bool" Value="_cumulative" ValueChanged="@(value => _cumulative = value)"
-                        Size="Size.Small" Color="Color.Primary">
-            <MudToggleItem Value="false" Text="Очки за раунд" />
-            <MudToggleItem Value="true" Text="Накопительно" />
-        </MudToggleGroup>
-    </MudStack>
+    <MudText Typo="Typo.overline" Class="mb-2">Очки за раунд</MudText>
 
     @if (RoundCount == 0)
     {
@@ -15,13 +7,12 @@
     }
     else
     {
-        <MudChart T="double" ChartType="ChartType.Line" ChartSeries="ChartData" ChartLabels="Labels" Height="260px" />
+        <MudChart T="double" ChartType="ChartType.Line" ChartSeries="ChartData" ChartLabels="Labels"
+                  Height="260px" CanHideSeries="true" />
     }
 </MudPaper>
 
 @code {
-    private bool _cumulative;
-
     [Parameter, EditorRequired] public IReadOnlyList<ChartSeriesDto> Series { get; set; } = Array.Empty<ChartSeriesDto>();
 
     private int RoundCount => Series.Count == 0 ? 0 : Series.Max(s => s.RoundPoints.Count);
@@ -32,7 +23,8 @@
         .Select(s => new ChartSeries<double>
         {
             Name = s.PlayerName,
-            Data = (_cumulative ? s.CumulativePoints : s.RoundPoints).ToArray()
+            Data = s.RoundPoints.ToArray(),
+            Visible = true
         })
         .ToList();
 }

@@ -84,15 +84,7 @@ public static class MatchStateMapper
                     .Select(t => (double)t.Points)
                     .ToList();
 
-                var cumulative = new List<double>(points.Count);
-                var running = 0d;
-                foreach (var value in points)
-                {
-                    running += value;
-                    cumulative.Add(running);
-                }
-
-                return new ChartSeriesDto(p.PlayerName, points, cumulative);
+                return new ChartSeriesDto(p.PlayerName, points);
             })
             .ToList();
 }

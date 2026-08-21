@@ -12,8 +12,7 @@ public sealed record MatchColumnDto(int ParticipantId, string PlayerName, IReadO
 
 public sealed record ChartSeriesDto(
     string PlayerName,
-    IReadOnlyList<double> RoundPoints,
-    IReadOnlyList<double> CumulativePoints);
+    IReadOnlyList<double> RoundPoints);
 
 public sealed record StandingDto(int Place, string PlayerName, int Total);
 

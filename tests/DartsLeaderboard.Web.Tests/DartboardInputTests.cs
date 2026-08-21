@@ -78,6 +78,20 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
+    public void NumberRing_CountsAsMiss()
+    {
+        IReadOnlyList<ThrowDartDto>? submitted = null;
+        var component = Render<DartboardInput>(parameters => parameters
+            .Add(p => p.OnSubmit, darts => submitted = darts));
+
+        component.Find("[data-dart=miss-20]").Click();
+        component.Find("[data-testid=submit-visit]").Click();
+
+        Assert.Equal(0, Sum(submitted));
+        Assert.False(submitted!.Single().IsDouble);
+    }
+
+    [Fact]
     public void RemainingExceededOnFirstDart_SubmitsZero()
     {
         IReadOnlyList<ThrowDartDto>? submitted = null;
@@ -98,7 +112,7 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
             .Add(p => p.Remaining, 21)
             .Add(p => p.OnSubmit, darts => submitted = darts));
 
-        component.Find("[data-dart=x1-20]").Click();
+        component.Find("[data-dart=x1i-20]").Click();
 
         Assert.Equal(0, Sum(submitted));
     }
@@ -111,7 +125,7 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
             .Add(p => p.Remaining, 20)
             .Add(p => p.OnSubmit, darts => submitted = darts));
 
-        component.Find("[data-dart=x1-20]").Click();
+        component.Find("[data-dart=x1i-20]").Click();
 
         Assert.Equal(0, Sum(submitted));
     }
@@ -138,7 +152,7 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
             .Add(p => p.Remaining, 40)
             .Add(p => p.OnSubmit, darts => submitted = darts));
 
-        component.Find("[data-dart=x1-20]").Click();
+        component.Find("[data-dart=x1i-20]").Click();
         component.Find("[data-dart=x2-10]").Click();
 
         Assert.Equal(40, Sum(submitted));

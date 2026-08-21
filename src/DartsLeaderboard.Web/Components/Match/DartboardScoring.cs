@@ -121,15 +121,23 @@ public sealed class DartboardVisit
 
 public static class DartboardLayout
 {
-    public const double Cx = 280;
-    public const double Cy = 280;
-    public const double ViewBox = 560;
-    public const double R50 = 32;
-    public const double R25 = 66;
-    public const double RSingle = 144;
-    public const double RTriple = 192;
-    public const double RDouble = 240;
-    public const double RLabel = 268;
+    public const double Cx = 320;
+    public const double Cy = 320;
+    public const double ViewBox = 640;
+
+    public const double R50 = 28;
+    public const double R25 = 58;
+    /// <summary>End of inner single / start of triple.</summary>
+    public const double RInnerSingle = 145;
+    /// <summary>End of triple / start of outer single.</summary>
+    public const double RTriple = 185;
+    /// <summary>End of outer single / start of double.</summary>
+    public const double ROuterSingle = 235;
+    /// <summary>Outer edge of double / inner edge of number ring.</summary>
+    public const double RDouble = 275;
+    /// <summary>Outer edge of number / miss ring.</summary>
+    public const double RMiss = 320;
+    public const double RLabel = 297.5;
 
     public static (double X, double Y) Polar(double radius, double degrees)
     {
@@ -161,12 +169,7 @@ public static class DartboardLayout
             return Polar((R50 + R25) / 2, -90 + spread);
         }
 
-        if (zoneId == "miss")
-        {
-            return Polar(RDouble + 32, 90 + spread);
-        }
-
-        var separator = zoneId.IndexOf('-');
+        var separator = zoneId.LastIndexOf('-');
         if (separator < 0)
         {
             return Polar(0, 0);
@@ -178,9 +181,11 @@ public static class DartboardLayout
         var angle = -90 + sectorIndex * 18 + spread;
         var (inner, outer) = ring switch
         {
-            "x1" => (R25, RSingle),
-            "x3" => (RSingle, RTriple),
-            _ => (RTriple, RDouble)
+            "miss" => (RDouble, RMiss),
+            "x1i" => (R25, RInnerSingle),
+            "x3" => (RInnerSingle, RTriple),
+            "x1o" => (RTriple, ROuterSingle),
+            _ => (ROuterSingle, RDouble)
         };
 
         return Polar((inner + outer) / 2, angle);

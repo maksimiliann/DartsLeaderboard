@@ -22,7 +22,8 @@
                         && row.RoundNumber == State.CurrentRoundNumber
                         && State.Columns[index].ParticipantId == State.CurrentParticipantId;
 
-                    <td class="@(isCurrent ? "mud-theme-primary" : null)" style="text-align: center">
+                    <td class="@(isCurrent && cell.Points is null ? "mud-theme-primary" : null)"
+                        style="@(CellStyle(cell, isCurrent) ?? "text-align: center")">
                         @if (cell.Points is not null)
                         {
                             <MudText Typo="Typo.body1"><b>@cell.Points</b></MudText>
@@ -43,22 +44,25 @@
     <tfoot>
         @foreach (var name in StatisticNames)
         {
-            <tr>
+            <tr class="@(IsEmphasized(name) ? "score-grid-emphasis" : null)">
                 <td>@name</td>
                 @foreach (var column in State.Columns)
                 {
                     <td style="text-align: center">
-                        @(column.Statistics.FirstOrDefault(s => s.Name == name)?.Value ?? "—")
+                        @{
+                            var value = column.Statistics.FirstOrDefault(s => s.Name == name)?.Value ?? "—";
+                        }
+                        @if (IsEmphasized(name) && value != "—")
+                        {
+                            <MudText Typo="Typo.h5"><b>@value</b></MudText>
+                        }
+                        else
+                        {
+                            @value
+                        }
                     </td>
                 }
             </tr>
         }
     </tfoot>
 </MudSimpleTable>
-
-@code {
-    [Parameter, EditorRequired] public MatchStateDto State { get; set; } = default!;
-
-    private IEnumerable<string> StatisticNames =>
-        State.Columns.SelectMany(c => c.Statistics.Select(s => s.Name)).Distinct();
-}

@@ -67,7 +67,6 @@ public class MatchStateMapperTests
         Assert.Equal(2, dto.ChartSeries.Count);
         Assert.Equal("Максим", dto.ChartSeries[0].PlayerName);
         Assert.Equal(new double[] { 60, 40 }, dto.ChartSeries[0].RoundPoints);
-        Assert.Equal(new double[] { 60, 100 }, dto.ChartSeries[0].CumulativePoints);
         Assert.Contains(dto.MatchStatistics, s => s.Name == "Лучший бросок" && s.Value == "60 · Максим");
         Assert.Equal(2, dto.Standings.Count);
         Assert.Equal(1, dto.Standings[0].Place);

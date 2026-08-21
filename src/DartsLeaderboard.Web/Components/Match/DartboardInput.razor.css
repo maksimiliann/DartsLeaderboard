@@ -1,16 +1,16 @@
 .dartboard-input {
-    max-width: 720px;
+    max-width: 780px;
 }
 
 .dartboard-actions {
-    width: 168px;
-    flex-shrink: 0;
+    width: 100%;
 }
 
 .dartboard {
     display: block;
     width: 100%;
-    max-width: 480px;
+    max-width: 560px;
+    margin-inline: auto;
     overflow: visible;
 }
 
@@ -41,6 +41,14 @@
     fill: #2e7d32;
 }
 
+.dartboard-slice-miss-even {
+    fill: #3a3a3a;
+}
+
+.dartboard-slice-miss-odd {
+    fill: #4a4a4a;
+}
+
 .dartboard-slice:hover,
 .dartboard-slice:focus,
 .dartboard-slice-hit {
@@ -48,23 +56,11 @@
 }
 
 ::deep .dartboard-number {
-    fill: var(--mud-palette-text-primary);
-    font-size: 16px;
-    font-weight: 700;
-    pointer-events: none;
-    user-select: none;
-}
-
-::deep .dartboard-ring-label {
-    fill: var(--mud-palette-text-primary);
-    font-size: 14px;
-    font-weight: 700;
-    pointer-events: none;
-    user-select: none;
-}
-
-::deep .dartboard-ring-label-on-color {
     fill: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    pointer-events: none;
+    user-select: none;
 }
 
 .dartboard-hit {
