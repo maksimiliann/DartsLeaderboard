@@ -18,6 +18,9 @@ public sealed class HighestTotalRules : IGameRules
 
     public Result ValidateThrow(Match match, MatchParticipant participant, int points) => Result.Success();
 
+    public int NormalizeVisit(Match match, MatchParticipant participant, IReadOnlyList<VisitDart> darts) =>
+        darts.Sum(dart => dart.Points);
+
     public MatchOutcome Evaluate(Match match)
     {
         var completedByEveryone = match.Participants.All(p => match.RoundCountOf(p.Id) >= _roundLimit);

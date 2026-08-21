@@ -15,10 +15,37 @@ public sealed class X01Rules : IGameRules
 
     public bool SupportsTrendChart => false;
 
-    public Result ValidateThrow(Match match, MatchParticipant participant, int points) =>
-        points > RemainingFor(match, participant)
-            ? Result.Failure(DomainErrorCode.PointsExceedRemaining)
-            : Result.Success();
+    public Result ValidateThrow(Match match, MatchParticipant participant, int points) => Result.Success();
+
+    public int NormalizeVisit(Match match, MatchParticipant participant, IReadOnlyList<VisitDart> darts)
+    {
+        var remaining = RemainingFor(match, participant);
+        var scored = 0;
+
+        foreach (var dart in darts)
+        {
+            if (dart.Points > remaining)
+            {
+                return 0;
+            }
+
+            var leftover = remaining - dart.Points;
+            if (leftover == 1)
+            {
+                return 0;
+            }
+
+            if (leftover == 0)
+            {
+                return dart.IsDouble ? scored + dart.Points : 0;
+            }
+
+            remaining = leftover;
+            scored += dart.Points;
+        }
+
+        return scored;
+    }
 
     public MatchOutcome Evaluate(Match match)
     {
@@ -73,8 +100,15 @@ public sealed class X01Rules : IGameRules
     internal int RemainingFor(Match match, MatchParticipant participant) =>
         _startingScore - match.PointsOf(participant.Id);
 
-    internal static string? DoubleOutHint(int remaining) =>
-        remaining == 50 || (remaining > 0 && remaining < 40 && remaining % 2 == 0)
-            ? remaining.ToString(Ru)
+    internal static string? DoubleOutHint(int remaining)
+    {
+        if (remaining == 50)
+        {
+            return "50";
+        }
+
+        return remaining > 0 && remaining < 40 && remaining % 2 == 0
+            ? (remaining / 2).ToString(Ru)
             : null;
+    }
 }

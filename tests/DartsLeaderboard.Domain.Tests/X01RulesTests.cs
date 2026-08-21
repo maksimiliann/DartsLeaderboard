@@ -1,4 +1,3 @@
-using DartsLeaderboard.Domain.Common;
 using DartsLeaderboard.Domain.Matches;
 using DartsLeaderboard.Domain.Matches.Rules;
 
@@ -27,14 +26,29 @@ public class X01RulesTests
     }
 
     [Fact]
-    public void ValidateThrow_RejectsPointsAboveRemaining()
+    public void NormalizeVisit_ZerosBustLeaveOneAndNonDoubleCheckout()
     {
-        var match = NewMatch();
-        var rules = new X01Rules(50);
+        var match = Match.Start(MatchSettings.X01(50), new[] { 1, 2 }, Now).Value!;
+        var rules = match.Rules;
+        var player = match.Participants[0];
 
-        var result = rules.ValidateThrow(match, match.Participants[0], 60);
+        Assert.Equal(0, rules.NormalizeVisit(match, player, [new VisitDart(60, false)]));
+        Assert.Equal(0, rules.NormalizeVisit(match, player, [new VisitDart(49, false)]));
+        Assert.Equal(0, rules.NormalizeVisit(match, player, [new VisitDart(50, false)]));
+        Assert.Equal(50, rules.NormalizeVisit(match, player, [new VisitDart(50, true)]));
+        Assert.Equal(20, rules.NormalizeVisit(match, player, [new VisitDart(20, false)]));
+    }
 
-        Assert.Equal(DomainErrorCode.PointsExceedRemaining, result.Error);
+    [Fact]
+    public void NormalizeVisit_AllowsDoubleCheckoutOnAnyDart()
+    {
+        var match = Match.Start(MatchSettings.X01(40), new[] { 1, 2 }, Now).Value!;
+        var rules = match.Rules;
+        var player = match.Participants[0];
+
+        Assert.Equal(40, rules.NormalizeVisit(match, player, [new VisitDart(40, true)]));
+        Assert.Equal(40, rules.NormalizeVisit(match, player, [new VisitDart(20, false), new VisitDart(20, true)]));
+        Assert.Equal(0, rules.NormalizeVisit(match, player, [new VisitDart(20, false), new VisitDart(20, false)]));
     }
 
     [Fact]

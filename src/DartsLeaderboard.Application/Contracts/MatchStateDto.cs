@@ -1,5 +1,7 @@
 namespace DartsLeaderboard.Application.Contracts;
 
+public sealed record ThrowDartDto(int Points, bool IsDouble);
+
 public sealed record StatisticDto(string Name, string Value);
 
 public sealed record MatchCellDto(int? Points, int? RunningValue);
@@ -29,4 +31,5 @@ public sealed record MatchStateDto(
     IReadOnlyList<StatisticDto> MatchStatistics,
     bool ShowTrendChart,
     IReadOnlyList<ChartSeriesDto> ChartSeries,
-    IReadOnlyList<StandingDto> Standings);
+    IReadOnlyList<StandingDto> Standings,
+    int? CurrentRemaining);

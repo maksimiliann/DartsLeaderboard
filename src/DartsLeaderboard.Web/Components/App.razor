@@ -20,6 +20,15 @@
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="@Assets["_framework/blazor.web.js"]" autostart="false"></script>
     <script>
+        window.dartsTheme = {
+            get: function () {
+                var match = document.cookie.match(/(?:^|; )darts-theme=(dark|light)/);
+                return match ? match[1] : null;
+            },
+            set: function (value) {
+                document.cookie = 'darts-theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+            }
+        };
         Blazor.start();
     </script>
 </body>

@@ -1,0 +1,68 @@
+.dartboard-input {
+    max-width: 720px;
+}
+
+.dartboard-actions {
+    width: 168px;
+    flex-shrink: 0;
+}
+
+.dartboard {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    overflow: visible;
+}
+
+.dartboard-disabled {
+    pointer-events: none;
+    opacity: 0.45;
+}
+
+.dartboard-slice {
+    stroke: var(--mud-palette-lines-default);
+    stroke-width: 1.25;
+    cursor: pointer;
+}
+
+.dartboard-slice-even {
+    fill: var(--mud-palette-gray-dark);
+}
+
+.dartboard-slice-odd {
+    fill: var(--mud-palette-surface);
+}
+
+.dartboard-slice:hover,
+.dartboard-slice:focus,
+.dartboard-slice-hit {
+    fill: var(--mud-palette-primary);
+}
+
+::deep .dartboard-number,
+::deep .dartboard-ring-label {
+    fill: var(--mud-palette-text-primary);
+    font-size: 16px;
+    font-weight: 700;
+    pointer-events: none;
+    user-select: none;
+}
+
+::deep .dartboard-ring-label {
+    font-size: 14px;
+}
+
+.dartboard-hit {
+    fill: #e53935;
+    stroke: #ffffff;
+    stroke-width: 1.25;
+    pointer-events: none;
+}
+
+::deep .dartboard-hit-label {
+    fill: #ffffff;
+    font-size: 9px;
+    font-weight: 700;
+    pointer-events: none;
+    user-select: none;
+}

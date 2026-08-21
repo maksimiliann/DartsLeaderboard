@@ -48,23 +48,52 @@ public class MatchThrowTests
     }
 
     [Fact]
-    public void RecordThrow_RejectsPointsAboveRemaining()
+    public void RecordThrow_BustRecordsZeroAndPassesTurn()
     {
-        var match = X01(101);
-        match.RecordThrow(100, Now);
-        match.RecordThrow(50, Now);
+        var match = X01(50);
 
-        var result = match.RecordThrow(20, Now);
+        var result = match.RecordThrow(60, Now);
 
-        Assert.Equal(DomainErrorCode.PointsExceedRemaining, result.Error);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.Points);
+        Assert.Equal(50, match.Rules.RunningValueAfterRound(match, match.Participants[0], 1));
+        Assert.Equal(match.Participants[1].Id, match.CurrentParticipant!.Id);
     }
 
     [Fact]
-    public void RecordThrow_FinishesMatchWhenRemainderIsZero()
+    public void RecordThrow_LeaveOneRecordsZeroAndPassesTurn()
     {
-        var match = X01(101);
-        match.RecordThrow(101, Now);
+        var match = X01(50);
 
+        var result = match.RecordThrow(49, Now);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.Points);
+        Assert.Equal(50, match.Rules.RunningValueAfterRound(match, match.Participants[0], 1));
+        Assert.Equal(match.Participants[1].Id, match.CurrentParticipant!.Id);
+    }
+
+    [Fact]
+    public void RecordThrow_NonDoubleCheckoutRecordsZeroAndPassesTurn()
+    {
+        var match = X01(40);
+
+        var result = match.RecordThrow(40, Now);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.Points);
+        Assert.Equal(MatchStatus.InProgress, match.Status);
+        Assert.Equal(match.Participants[1].Id, match.CurrentParticipant!.Id);
+    }
+
+    [Fact]
+    public void RecordThrow_DoubleOnFirstDartFinishesMatch()
+    {
+        var match = X01(40);
+        var result = match.RecordThrow([new VisitDart(40, true)], Now);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(40, result.Value!.Points);
         Assert.Equal(MatchStatus.Finished, match.Status);
         Assert.Equal(Now, match.FinishedAt);
         Assert.Equal(match.Participants[0].Id, match.WinnerParticipantId);
@@ -72,10 +101,23 @@ public class MatchThrowTests
     }
 
     [Fact]
+    public void RecordThrow_DoubleOnSecondDartFinishesMatch()
+    {
+        var match = X01(40);
+        var result = match.RecordThrow(
+            [new VisitDart(20, false), new VisitDart(20, true)],
+            Now);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(40, result.Value!.Points);
+        Assert.Equal(MatchStatus.Finished, match.Status);
+    }
+
+    [Fact]
     public void RecordThrow_RejectedAfterMatchFinished()
     {
-        var match = X01(101);
-        match.RecordThrow(101, Now);
+        var match = X01(40);
+        match.RecordThrow([new VisitDart(40, true)], Now);
 
         var result = match.RecordThrow(20, Now);
 
@@ -85,8 +127,8 @@ public class MatchThrowTests
     [Fact]
     public void UndoLastThrow_RemovesThrowAndReopensMatch()
     {
-        var match = X01(101);
-        match.RecordThrow(101, Now);
+        var match = X01(40);
+        match.RecordThrow([new VisitDart(40, true)], Now);
 
         var result = match.UndoLastThrow();
 

@@ -22,7 +22,7 @@ public class StatisticsTests
     [Fact]
     public void X01_PlayerStatistics_ShowClosingRoundsForWinner()
     {
-        var match = MatchTestFactory.Create(MatchSettings.X01(101), 2).WithThrows(60, 20, 41);
+        var match = MatchTestFactory.Create(MatchSettings.X01(60), 2).WithThrows(20, 20).WithDoubleOut(40);
         var stats = match.Rules.BuildPlayerStatistics(match, match.Participants[0]);
 
         Assert.Equal("0", Value(stats, "Осталось"));
@@ -40,9 +40,10 @@ public class StatisticsTests
 
     [Theory]
     [InlineData(50, "50")]
-    [InlineData(38, "38")]
-    [InlineData(32, "32")]
-    [InlineData(2, "2")]
+    [InlineData(38, "19")]
+    [InlineData(32, "16")]
+    [InlineData(30, "15")]
+    [InlineData(2, "1")]
     public void X01_PlayerStatistics_ShowDoubleOutHint(int remaining, string expected)
     {
         var match = MatchTestFactory.Create(MatchSettings.X01(remaining), 2);
@@ -67,7 +68,7 @@ public class StatisticsTests
     [Fact]
     public void X01_PlayerStatistics_OmitDoubleOutHintWhenClosed()
     {
-        var match = MatchTestFactory.Create(MatchSettings.X01(101), 2).WithThrows(101);
+        var match = MatchTestFactory.Create(MatchSettings.X01(40), 2).WithDoubleOut(40);
         var stats = match.Rules.BuildPlayerStatistics(match, match.Participants[0]);
 
         Assert.DoesNotContain(stats, i => i.Name == "Удвоение");

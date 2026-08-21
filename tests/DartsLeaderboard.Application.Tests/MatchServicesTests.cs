@@ -91,7 +91,7 @@ public class MatchServicesTests
     }
 
     [Fact]
-    public async Task RecordThrow_PropagatesDomainError()
+    public async Task RecordThrow_BustRecordsZeroAndContinues()
     {
         var match = TestMatchBuilder.Create(MatchSettings.X01(101), "Максим", "Аня");
         _matches.Seed(match);
@@ -99,7 +99,23 @@ public class MatchServicesTests
 
         var result = await service.ExecuteAsync(match.Id, 180);
 
-        Assert.Equal("Больше остатка: при переборе вводите 0", result.ErrorMessage);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.Rows[0].Cells[0].Points);
+        Assert.Equal("Аня", result.Value.CurrentPlayerName);
+    }
+
+    [Fact]
+    public async Task RecordThrow_DoubleOutOnFirstDartFinishesMatch()
+    {
+        var match = TestMatchBuilder.Create(MatchSettings.X01(40), "Максим", "Аня");
+        _matches.Seed(match);
+        var service = new RecordThrowService(_matches, _clock, _notifier);
+
+        var result = await service.ExecuteAsync(match.Id, [new ThrowDartDto(40, true)]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Завершён", result.Value!.StatusTitle);
+        Assert.Equal("Максим", result.Value.WinnerPlayerName);
     }
 
     [Fact]

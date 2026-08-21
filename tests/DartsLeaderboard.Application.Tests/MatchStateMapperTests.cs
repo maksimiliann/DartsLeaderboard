@@ -21,11 +21,13 @@ public class MatchStateMapperTests
         Assert.Equal(new[] { "Максим", "Аня" }, dto.Columns.Select(c => c.PlayerName));
         Assert.Equal(2, dto.Rows.Count);
         Assert.Equal(60, dto.Rows[0].Cells[0].Points);
-        Assert.Equal(241, dto.Rows[0].Cells[0].RunningValue);
+        Assert.Null(dto.Rows[0].Cells[0].RunningValue);
         Assert.Equal(100, dto.Rows[1].Cells[0].Points);
-        Assert.Equal(141, dto.Rows[1].Cells[0].RunningValue);
+        Assert.Null(dto.Rows[1].Cells[0].RunningValue);
+        Assert.Contains(dto.Columns[0].Statistics, s => s.Name == "Осталось" && s.Value == "141");
         Assert.Null(dto.Rows[1].Cells[1].Points);
         Assert.Equal("Аня", dto.CurrentPlayerName);
+        Assert.Equal(256, dto.CurrentRemaining);
         Assert.False(dto.ShowTrendChart);
         Assert.Empty(dto.ChartSeries);
         Assert.Empty(dto.Standings);
@@ -35,8 +37,8 @@ public class MatchStateMapperTests
     public void ToDto_X01_ShowsWinnerAndFinishedStatus()
     {
         var match = TestMatchBuilder
-            .Create(MatchSettings.X01(101), "Максим", "Аня")
-            .WithThrows(101);
+            .Create(MatchSettings.X01(40), "Максим", "Аня")
+            .WithDoubleOut(40);
 
         var dto = MatchStateMapper.ToDto(match);
 
@@ -56,6 +58,7 @@ public class MatchStateMapperTests
         var dto = MatchStateMapper.ToDto(match);
 
         Assert.True(dto.ShowTrendChart);
+        Assert.Null(dto.CurrentRemaining);
         Assert.Equal(2, dto.ChartSeries.Count);
         Assert.Equal("Максим", dto.ChartSeries[0].PlayerName);
         Assert.Equal(new double[] { 60, 40 }, dto.ChartSeries[0].RoundPoints);

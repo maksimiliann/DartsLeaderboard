@@ -1,0 +1,290 @@
+<div class="dartboard-input">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+        <MudText Typo="Typo.subtitle1">
+            @(PlayerName is null ? "Очки" : $"Очки: {PlayerName}")
+        </MudText>
+        <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
+        @for (var index = 0; index < 3; index++)
+        {
+            var slot = index;
+            var dart = slot < _visit.Darts.Count ? _visit.Darts[slot] : (DartboardDart?)null;
+            <MudChip T="string" Size="Size.Small" Color="@(dart is null ? Color.Default : Color.Primary)"
+                     Variant="@(dart is null ? Variant.Outlined : Variant.Filled)">
+                @(dart is null ? $"Дротик {slot + 1}" : $"{dart.Value.Label} · {dart.Value.Points}")
+            </MudChip>
+        }
+    </MudStack>
+
+    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3">
+        <MudStack Spacing="2" Class="dartboard-actions">
+            <MudButton Variant="Variant.Outlined" Disabled="Disabled" OnClick="Miss"
+                       Style="width: 100%">Мимо</MudButton>
+            <MudButton Variant="Variant.Text" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart"
+                       Style="width: 100%">
+                Отменить дротик
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       Disabled="@(Disabled || _visit.Darts.Count == 0)"
+                       data-testid="submit-visit" OnClick="SubmitVisit"
+                       Style="width: 100%">
+                Записать визит
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="OnUndoThrow"
+                       Style="width: 100%">
+                Отменить бросок
+            </MudButton>
+        </MudStack>
+
+    <svg class="dartboard @(Disabled ? "dartboard-disabled" : null)"
+         viewBox="0 0 @((int)DartboardLayout.ViewBox) @((int)DartboardLayout.ViewBox)"
+         role="img" aria-label="Мишень для ввода дротиков">
+        @foreach (var slice in Slices)
+        {
+            <path class="@SliceClass(slice.Id, slice.SectorIndex)"
+                  d="@slice.Path"
+                  data-dart="@slice.Id"
+                  @onclick="() => Hit(slice.Dart, slice.Id)">
+                <title>@slice.Dart.Label · @slice.Dart.Points</title>
+            </path>
+        }
+
+        @foreach (var number in Numbers)
+        {
+            <SvgText Class="dartboard-number" X="@number.X" Y="@number.Y">@number.Sector</SvgText>
+        }
+
+        <circle class="@SliceClass("25", 1)"
+                cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R25)"
+                data-dart="25"
+                @onclick="@(() => Hit(DartboardScoring.OuterBull, "25"))">
+            <title>25</title>
+        </circle>
+        <circle class="@SliceClass("50", 0)"
+                cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R50)"
+                data-dart="50"
+                @onclick="@(() => Hit(DartboardScoring.InnerBull, "50"))">
+            <title>50</title>
+        </circle>
+
+        <SvgText Class="dartboard-ring-label" X="@F(DartboardLayout.Cx)" Y="@F(DartboardLayout.Cy)">50</SvgText>
+        <SvgText Class="dartboard-ring-label" X="@F(DartboardLayout.Cx)" Y="@F(Bull25LabelY)">25</SvgText>
+
+        @foreach (var mark in RingMarks)
+        {
+            <SvgText Class="dartboard-ring-label" X="@mark.X" Y="@mark.Y">@mark.Text</SvgText>
+        }
+
+        @foreach (var marker in HitMarkers)
+        {
+            <circle class="dartboard-hit" data-hit="@marker.Number"
+                    cx="@marker.X" cy="@marker.Y" r="6.5"
+                    fill="#e53935" stroke="#ffffff" stroke-width="1.25">
+                <title>Дротик @marker.Number</title>
+            </circle>
+            <SvgText Class="dartboard-hit-label" X="@marker.X" Y="@marker.Y" Fill="#ffffff">@marker.Number</SvgText>
+        }
+    </svg>
+    </MudStack>
+</div>
+
+@code {
+    private static readonly (DartboardRing Ring, double Inner, double Outer, string Mark)[] Rings =
+    [
+        (DartboardRing.Single, DartboardLayout.R25, DartboardLayout.RSingle, "x1"),
+        (DartboardRing.Triple, DartboardLayout.RSingle, DartboardLayout.RTriple, "x3"),
+        (DartboardRing.Double, DartboardLayout.RTriple, DartboardLayout.RDouble, "x2")
+    ];
+
+    private DartboardVisit _visit = new();
+    private readonly List<string> _hitIds = [];
+    private string? _lastHitId;
+    private string? _trackedPlayer;
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public string? PlayerName { get; set; }
+
+    [Parameter] public int? Remaining { get; set; }
+
+    [Parameter] public EventCallback<IReadOnlyList<ThrowDartDto>> OnSubmit { get; set; }
+
+    [Parameter] public EventCallback OnUndoThrow { get; set; }
+
+    private static double Bull25LabelY =>
+        DartboardLayout.Cy - (DartboardLayout.R50 + DartboardLayout.R25) / 2;
+
+    private IEnumerable<Slice> Slices
+    {
+        get
+        {
+            for (var index = 0; index < DartboardScoring.SectorOrder.Length; index++)
+            {
+                var sector = DartboardScoring.SectorOrder[index];
+                var center = -90 + index * 18;
+                var start = center - 9;
+                var end = center + 9;
+                foreach (var ring in Rings)
+                {
+                    var dart = DartboardScoring.Sector(ring.Ring, sector);
+                    var id = $"x{(int)ring.Ring}-{sector}";
+                    yield return new Slice(
+                        id,
+                        index,
+                        DartboardLayout.RingSlice(ring.Inner, ring.Outer, start, end),
+                        dart);
+                }
+            }
+        }
+    }
+
+    private IEnumerable<NumberLabel> Numbers
+    {
+        get
+        {
+            for (var index = 0; index < DartboardScoring.SectorOrder.Length; index++)
+            {
+                var sector = DartboardScoring.SectorOrder[index];
+                var (x, y) = DartboardLayout.Polar(DartboardLayout.RLabel, -90 + index * 18);
+                yield return new NumberLabel(sector, F(x), F(y));
+            }
+        }
+    }
+
+    private IReadOnlyList<HitMarker> HitMarkers
+    {
+        get
+        {
+            var markers = new List<HitMarker>(_hitIds.Count);
+            for (var index = 0; index < _hitIds.Count; index++)
+            {
+                var id = _hitIds[index];
+                var sameTotal = _hitIds.Count(zone => zone == id);
+                var sameIndex = _hitIds.Take(index + 1).Count(zone => zone == id) - 1;
+                var (x, y) = DartboardLayout.HitMarker(id, sameIndex, sameTotal);
+                markers.Add(new HitMarker(index + 1, F(x), F(y)));
+            }
+
+            return markers;
+        }
+    }
+
+    private IEnumerable<RingMark> RingMarks
+    {
+        get
+        {
+            foreach (var ring in Rings)
+            {
+                var (x, y) = DartboardLayout.Polar((ring.Inner + ring.Outer) / 2, -90);
+                yield return new RingMark(ring.Mark, F(x), F(y));
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_trackedPlayer == PlayerName)
+        {
+            return;
+        }
+
+        _trackedPlayer = PlayerName;
+        _visit = new DartboardVisit();
+        _hitIds.Clear();
+        _lastHitId = null;
+    }
+
+    private string SliceClass(string id, int sectorIndex)
+    {
+        var parity = sectorIndex % 2 == 0 ? "dartboard-slice-even" : "dartboard-slice-odd";
+        var hit = id == _lastHitId ? " dartboard-slice-hit" : string.Empty;
+        return $"dartboard-slice {parity}{hit}";
+    }
+
+    private async Task Hit(DartboardDart dart, string id)
+    {
+        if (Disabled || !_visit.TryAdd(dart))
+        {
+            return;
+        }
+
+        _lastHitId = id;
+        _hitIds.Add(id);
+        if (Remaining is int remaining)
+        {
+            var result = DartboardScoring.EvaluateX01Visit(remaining, _visit.Darts);
+            if (result == X01VisitResult.Bust)
+            {
+                await FinishBust();
+                return;
+            }
+
+            if (result == X01VisitResult.Checkout)
+            {
+                await FinishVisit();
+                return;
+            }
+        }
+
+        if (_visit.IsFull)
+        {
+            await SubmitVisit();
+        }
+    }
+
+    private Task Miss() => Hit(DartboardScoring.Miss, "miss");
+
+    private void UndoDart()
+    {
+        if (_visit.TryUndo())
+        {
+            if (_hitIds.Count > 0)
+            {
+                _hitIds.RemoveAt(_hitIds.Count - 1);
+            }
+
+            _lastHitId = _hitIds.LastOrDefault();
+        }
+    }
+
+    private Task SubmitVisit()
+    {
+        if (_visit.Darts.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        return FinishVisit();
+    }
+
+    private Task FinishBust()
+    {
+        _visit.Bust();
+        return Finish([]);
+    }
+
+    private Task FinishVisit()
+    {
+        var darts = _visit.Darts
+            .Select(dart => new ThrowDartDto(dart.Points, dart.IsDouble))
+            .ToList();
+        _visit.TakeSum();
+        return Finish(darts);
+    }
+
+    private async Task Finish(IReadOnlyList<ThrowDartDto> darts)
+    {
+        _hitIds.Clear();
+        _lastHitId = null;
+        await OnSubmit.InvokeAsync(darts);
+    }
+
+    private static string F(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private readonly record struct HitMarker(int Number, string X, string Y);
+
+    private readonly record struct Slice(string Id, int SectorIndex, string Path, DartboardDart Dart);
+
+    private readonly record struct NumberLabel(int Sector, string X, string Y);
+
+    private readonly record struct RingMark(string Text, string X, string Y);
+}

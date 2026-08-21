@@ -46,7 +46,16 @@ internal static class MatchTestFactory
         return match;
     }
 
-    /// <summary>Записывает броски по кругу через публичный API агрегата, с проверкой правил.</summary>
+    public static Match WithDoubleOut(this Match match, int points)
+    {
+        var result = match.RecordThrow([new VisitDart(points, true)], Start);
+        if (!result.IsSuccess)
+        {
+            throw new InvalidOperationException($"Закрытие {points} отклонено: {result.Error}");
+        }
+
+        return match;
+    }
     public static Match WithThrows(this Match match, params int[] points)
     {
         for (var i = 0; i < points.Length; i++)

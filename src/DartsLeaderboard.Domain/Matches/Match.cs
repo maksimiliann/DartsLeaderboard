@@ -44,14 +44,18 @@ public sealed class Match
 
     public int CompletedRoundCount => _throws.Count == 0 ? 0 : _throws.Max(t => t.RoundNumber);
 
-    public Result<Throw> RecordThrow(int points, DateTimeOffset now)
+    public Result<Throw> RecordThrow(int points, DateTimeOffset now) =>
+        RecordThrow([new VisitDart(points, false)], now);
+
+    public Result<Throw> RecordThrow(IReadOnlyList<VisitDart> darts, DateTimeOffset now)
     {
         if (Status != MatchStatus.InProgress)
         {
             return Result<Throw>.Failure(DomainErrorCode.MatchNotInProgress);
         }
 
-        if (points < 0 || points > Throw.MaxPoints)
+        var points = darts.Count == 0 ? 0 : darts.Sum(dart => dart.Points);
+        if (points < 0 || points > Throw.MaxPoints || darts.Any(dart => dart.Points < 0 || dart.Points > Throw.MaxPoints))
         {
             return Result<Throw>.Failure(DomainErrorCode.PointsOutOfRange);
         }
@@ -65,7 +69,11 @@ public sealed class Match
             return Result<Throw>.Failure(validation.Error!.Value);
         }
 
-        var recorded = new Throw(participant.Id, CurrentRoundNumber, points, now);
+        var recorded = new Throw(
+            participant.Id,
+            CurrentRoundNumber,
+            rules.NormalizeVisit(this, participant, darts),
+            now);
         _throws.Add(recorded);
 
         var outcome = rules.Evaluate(this);

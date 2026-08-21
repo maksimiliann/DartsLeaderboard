@@ -27,10 +27,10 @@ public class QueriesTests(PostgresFixture fixture)
         await players.SaveChangesAsync(default);
 
         var matches = new MatchRepository(context);
-        var match = Match.Start(MatchSettings.X01(101), new[] { winner.Id, loser.Id }, Now).Value!;
+        var match = Match.Start(MatchSettings.X01(40), new[] { winner.Id, loser.Id }, Now).Value!;
         await matches.AddAsync(match, default);
         await matches.SaveChangesAsync(default);
-        match.RecordThrow(101, Now);
+        match.RecordThrow([new VisitDart(40, true)], Now);
         await matches.SaveChangesAsync(default);
 
         var rows = await new LeaderboardQueries(context).GetAsync(default);
@@ -57,12 +57,12 @@ public class QueriesTests(PostgresFixture fixture)
         await players.SaveChangesAsync(default);
 
         var matches = new MatchRepository(context);
-        var x01 = Match.Start(MatchSettings.X01(101), new[] { winner.Id, loser.Id }, Now).Value!;
+        var x01 = Match.Start(MatchSettings.X01(40), new[] { winner.Id, loser.Id }, Now).Value!;
         var highest = Match.Start(MatchSettings.HighestTotal(1), new[] { winner.Id, loser.Id }, Now).Value!;
         await matches.AddAsync(x01, default);
         await matches.AddAsync(highest, default);
         await matches.SaveChangesAsync(default);
-        x01.RecordThrow(101, Now);
+        x01.RecordThrow([new VisitDart(40, true)], Now);
         highest.RecordThrow(60, Now);
         highest.RecordThrow(10, Now);
         await matches.SaveChangesAsync(default);
@@ -91,10 +91,10 @@ public class QueriesTests(PostgresFixture fixture)
         await players.SaveChangesAsync(default);
 
         var matches = new MatchRepository(context);
-        var match = Match.Start(MatchSettings.X01(101), new[] { player.Id, other.Id }, Now).Value!;
+        var match = Match.Start(MatchSettings.X01(40), new[] { player.Id, other.Id }, Now).Value!;
         await matches.AddAsync(match, default);
         await matches.SaveChangesAsync(default);
-        match.RecordThrow(101, Now);
+        match.RecordThrow([new VisitDart(40, true)], Now);
         await matches.SaveChangesAsync(default);
 
         context.WinArchives.Add(new PlayerWinArchive
@@ -127,12 +127,12 @@ public class QueriesTests(PostgresFixture fixture)
         await players.SaveChangesAsync(default);
 
         var matches = new MatchRepository(context);
-        var finished = Match.Start(MatchSettings.X01(101), new[] { first.Id, second.Id }, Now).Value!;
+        var finished = Match.Start(MatchSettings.X01(40), new[] { first.Id, second.Id }, Now).Value!;
         var running = Match.Start(MatchSettings.HighestTotal(5), new[] { first.Id, second.Id }, Now).Value!;
         await matches.AddAsync(finished, default);
         await matches.AddAsync(running, default);
         await matches.SaveChangesAsync(default);
-        finished.RecordThrow(101, Now);
+        finished.RecordThrow([new VisitDart(40, true)], Now);
         await matches.SaveChangesAsync(default);
 
         var queries = new MatchQueries(context);
@@ -140,7 +140,7 @@ public class QueriesTests(PostgresFixture fixture)
         var runningList = await queries.ListAsync(MatchListFilter.InProgress, default);
 
         var finishedItem = finishedList.Single(m => m.MatchId == finished.Id);
-        Assert.Equal("101 на очки", finishedItem.ModeTitle);
+        Assert.Equal("40 на очки", finishedItem.ModeTitle);
         Assert.Equal(first.Name, finishedItem.WinnerName);
         Assert.Contains(first.Name, finishedItem.Participants);
 

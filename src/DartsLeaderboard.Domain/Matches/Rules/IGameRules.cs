@@ -10,6 +10,8 @@ public interface IGameRules
 
     Result ValidateThrow(Match match, MatchParticipant participant, int points);
 
+    int NormalizeVisit(Match match, MatchParticipant participant, IReadOnlyList<VisitDart> darts);
+
     MatchOutcome Evaluate(Match match);
 
     int? RunningValueAfterRound(Match match, MatchParticipant participant, int roundNumber);

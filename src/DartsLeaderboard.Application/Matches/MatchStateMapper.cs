@@ -22,7 +22,11 @@ public static class MatchStateMapper
         {
             var cells = participants
                 .Select(p => throwsByCell.TryGetValue((p.Id, round), out var recorded)
-                    ? new MatchCellDto(recorded.Points, rules.RunningValueAfterRound(match, p, round))
+                    ? new MatchCellDto(
+                        recorded.Points,
+                        match.Mode == GameMode.HighestTotal
+                            ? rules.RunningValueAfterRound(match, p, round)
+                            : null)
                     : new MatchCellDto(null, null))
                 .ToList();
 
@@ -49,7 +53,18 @@ public static class MatchStateMapper
             Map(rules.BuildMatchStatistics(match)),
             rules.SupportsTrendChart,
             rules.SupportsTrendChart ? BuildSeries(match) : Array.Empty<ChartSeriesDto>(),
-            rules.BuildStandings(match).Select(s => new StandingDto(s.Place, s.PlayerName, s.Total)).ToList());
+            rules.BuildStandings(match).Select(s => new StandingDto(s.Place, s.PlayerName, s.Total)).ToList(),
+            CurrentRemaining(match));
+    }
+
+    private static int? CurrentRemaining(Match match)
+    {
+        if (match.Mode != GameMode.X01 || match.CurrentParticipant is null)
+        {
+            return null;
+        }
+
+        return match.StartingScore!.Value - match.PointsOf(match.CurrentParticipant.Id);
     }
 
     private static IReadOnlyList<StatisticDto> Map(IReadOnlyList<StatisticItem> items) =>

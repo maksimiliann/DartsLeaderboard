@@ -2,14 +2,21 @@ using DartsLeaderboard.Application.Abstractions;
 using DartsLeaderboard.Application.Common;
 using DartsLeaderboard.Application.Contracts;
 using DartsLeaderboard.Domain.Common;
+using DartsLeaderboard.Domain.Matches;
 
 namespace DartsLeaderboard.Application.Matches;
 
 public sealed class RecordThrowService(IMatchRepository matches, IClock clock, IMatchNotifier notifier)
 {
-    public async Task<OperationResult<MatchStateDto>> ExecuteAsync(
+    public Task<OperationResult<MatchStateDto>> ExecuteAsync(
         int matchId,
         int points,
+        CancellationToken cancellationToken = default) =>
+        ExecuteAsync(matchId, [new ThrowDartDto(points, false)], cancellationToken);
+
+    public async Task<OperationResult<MatchStateDto>> ExecuteAsync(
+        int matchId,
+        IReadOnlyList<ThrowDartDto> darts,
         CancellationToken cancellationToken = default)
     {
         var match = await matches.GetAsync(matchId, cancellationToken);
@@ -18,7 +25,8 @@ public sealed class RecordThrowService(IMatchRepository matches, IClock clock, I
             return OperationResult<MatchStateDto>.Fail(DomainErrorCode.MatchNotFound);
         }
 
-        var recorded = match.RecordThrow(points, clock.UtcNow);
+        var visit = darts.Select(dart => new VisitDart(dart.Points, dart.IsDouble)).ToList();
+        var recorded = match.RecordThrow(visit, clock.UtcNow);
         if (!recorded.IsSuccess)
         {
             return OperationResult<MatchStateDto>.Fail(recorded.Error!.Value);

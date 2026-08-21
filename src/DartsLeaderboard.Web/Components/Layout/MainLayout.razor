@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
 
-<MudThemeProvider IsDarkMode="true" />
+<MudThemeProvider @bind-IsDarkMode="_isDarkMode" ObserveSystemDarkModeChange="false" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -10,6 +11,15 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                        OnClick="@(() => _drawerOpen = !_drawerOpen)" />
         <MudText Typo="Typo.h6" Class="ml-2">Дартс</MudText>
+        <MudSpacer />
+        <MudTooltip Text="@(_isDarkMode ? "Светлая тема" : "Тёмная тема")">
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="Color.Inherit"
+                           Edge="Edge.End"
+                           aria-label="@(_isDarkMode ? "Включить светлую тему" : "Включить тёмную тему")"
+                           data-testid="theme-toggle"
+                           OnClick="ToggleTheme" />
+        </MudTooltip>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
         <NavMenu />
@@ -23,4 +33,29 @@
 
 @code {
     private bool _drawerOpen = true;
+    private bool _isDarkMode;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var stored = await JS.InvokeAsync<string?>("dartsTheme.get");
+        var dark = stored == "dark";
+        if (dark == _isDarkMode)
+        {
+            return;
+        }
+
+        _isDarkMode = dark;
+        StateHasChanged();
+    }
+
+    private async Task ToggleTheme()
+    {
+        _isDarkMode = !_isDarkMode;
+        await JS.InvokeVoidAsync("dartsTheme.set", _isDarkMode ? "dark" : "light");
+    }
 }
