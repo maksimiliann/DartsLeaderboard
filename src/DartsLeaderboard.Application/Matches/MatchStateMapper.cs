@@ -22,11 +22,7 @@ public static class MatchStateMapper
         {
             var cells = participants
                 .Select(p => throwsByCell.TryGetValue((p.Id, round), out var recorded)
-                    ? new MatchCellDto(
-                        recorded.Points,
-                        match.Mode == GameMode.HighestTotal
-                            ? rules.RunningValueAfterRound(match, p, round)
-                            : null)
+                    ? new MatchCellDto(recorded.Points, null)
                     : new MatchCellDto(null, null))
                 .ToList();
 

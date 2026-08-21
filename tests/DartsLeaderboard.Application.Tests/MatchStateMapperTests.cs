@@ -59,6 +59,11 @@ public class MatchStateMapperTests
 
         Assert.True(dto.ShowTrendChart);
         Assert.Null(dto.CurrentRemaining);
+        Assert.Equal(60, dto.Rows[0].Cells[0].Points);
+        Assert.Null(dto.Rows[0].Cells[0].RunningValue);
+        Assert.Equal(40, dto.Rows[1].Cells[0].Points);
+        Assert.Null(dto.Rows[1].Cells[0].RunningValue);
+        Assert.Contains(dto.Columns[0].Statistics, s => s.Name == "Сумма" && s.Value == "100");
         Assert.Equal(2, dto.ChartSeries.Count);
         Assert.Equal("Максим", dto.ChartSeries[0].PlayerName);
         Assert.Equal(new double[] { 60, 40 }, dto.ChartSeries[0].RoundPoints);

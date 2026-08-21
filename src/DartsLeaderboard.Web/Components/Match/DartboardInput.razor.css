@@ -20,17 +20,25 @@
 }
 
 .dartboard-slice {
-    stroke: var(--mud-palette-lines-default);
+    stroke: rgba(0, 0, 0, 0.35);
     stroke-width: 1.25;
     cursor: pointer;
 }
 
+.dartboard-slice-single-even {
+    fill: #2c2c2c;
+}
+
+.dartboard-slice-single-odd {
+    fill: #efe6d4;
+}
+
 .dartboard-slice-even {
-    fill: var(--mud-palette-gray-dark);
+    fill: #c62828;
 }
 
 .dartboard-slice-odd {
-    fill: var(--mud-palette-surface);
+    fill: #2e7d32;
 }
 
 .dartboard-slice:hover,
@@ -39,8 +47,7 @@
     fill: var(--mud-palette-primary);
 }
 
-::deep .dartboard-number,
-::deep .dartboard-ring-label {
+::deep .dartboard-number {
     fill: var(--mud-palette-text-primary);
     font-size: 16px;
     font-weight: 700;
@@ -49,7 +56,15 @@
 }
 
 ::deep .dartboard-ring-label {
+    fill: var(--mud-palette-text-primary);
     font-size: 14px;
+    font-weight: 700;
+    pointer-events: none;
+    user-select: none;
+}
+
+::deep .dartboard-ring-label-on-color {
+    fill: #ffffff;
 }
 
 .dartboard-hit {

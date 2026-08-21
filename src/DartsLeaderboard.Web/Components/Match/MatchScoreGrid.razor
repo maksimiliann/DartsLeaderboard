@@ -26,10 +26,6 @@
                         @if (cell.Points is not null)
                         {
                             <MudText Typo="Typo.body1"><b>@cell.Points</b></MudText>
-                            @if (cell.RunningValue is not null)
-                            {
-                                <MudText Typo="Typo.caption">@cell.RunningValue</MudText>
-                            }
                         }
                         else if (isCurrent)
                         {

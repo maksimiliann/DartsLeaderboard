@@ -40,7 +40,7 @@
          role="img" aria-label="Мишень для ввода дротиков">
         @foreach (var slice in Slices)
         {
-            <path class="@SliceClass(slice.Id, slice.SectorIndex)"
+            <path class="@SliceClass(slice.Id, slice.SectorIndex, slice.Ring)"
                   d="@slice.Path"
                   data-dart="@slice.Id"
                   @onclick="() => Hit(slice.Dart, slice.Id)">
@@ -53,25 +53,25 @@
             <SvgText Class="dartboard-number" X="@number.X" Y="@number.Y">@number.Sector</SvgText>
         }
 
-        <circle class="@SliceClass("25", 1)"
+        <circle class="@SliceClass("25", 1, DartboardRing.Double)"
                 cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R25)"
                 data-dart="25"
                 @onclick="@(() => Hit(DartboardScoring.OuterBull, "25"))">
             <title>25</title>
         </circle>
-        <circle class="@SliceClass("50", 0)"
+        <circle class="@SliceClass("50", 0, DartboardRing.Double)"
                 cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R50)"
                 data-dart="50"
                 @onclick="@(() => Hit(DartboardScoring.InnerBull, "50"))">
             <title>50</title>
         </circle>
 
-        <SvgText Class="dartboard-ring-label" X="@F(DartboardLayout.Cx)" Y="@F(DartboardLayout.Cy)">50</SvgText>
-        <SvgText Class="dartboard-ring-label" X="@F(DartboardLayout.Cx)" Y="@F(Bull25LabelY)">25</SvgText>
+        <SvgText Class="dartboard-ring-label dartboard-ring-label-on-color" X="@F(DartboardLayout.Cx)" Y="@F(DartboardLayout.Cy)">50</SvgText>
+        <SvgText Class="dartboard-ring-label dartboard-ring-label-on-color" X="@F(DartboardLayout.Cx)" Y="@F(Bull25LabelY)">25</SvgText>
 
         @foreach (var mark in RingMarks)
         {
-            <SvgText Class="dartboard-ring-label" X="@mark.X" Y="@mark.Y">@mark.Text</SvgText>
+            <SvgText Class="@mark.ClassName" X="@mark.X" Y="@mark.Y">@mark.Text</SvgText>
         }
 
         @foreach (var marker in HitMarkers)
@@ -130,6 +130,7 @@
                     yield return new Slice(
                         id,
                         index,
+                        ring.Ring,
                         DartboardLayout.RingSlice(ring.Inner, ring.Outer, start, end),
                         dart);
                 }
@@ -175,7 +176,8 @@
             foreach (var ring in Rings)
             {
                 var (x, y) = DartboardLayout.Polar((ring.Inner + ring.Outer) / 2, -90);
-                yield return new RingMark(ring.Mark, F(x), F(y));
+                var className = "dartboard-ring-label dartboard-ring-label-on-color";
+                yield return new RingMark(ring.Mark, F(x), F(y), className);
             }
         }
     }
@@ -193,11 +195,14 @@
         _lastHitId = null;
     }
 
-    private string SliceClass(string id, int sectorIndex)
+    private string SliceClass(string id, int sectorIndex, DartboardRing ring)
     {
-        var parity = sectorIndex % 2 == 0 ? "dartboard-slice-even" : "dartboard-slice-odd";
+        var parity = sectorIndex % 2 == 0 ? "even" : "odd";
+        var tone = ring == DartboardRing.Single
+            ? $"dartboard-slice-single-{parity}"
+            : $"dartboard-slice-{parity}";
         var hit = id == _lastHitId ? " dartboard-slice-hit" : string.Empty;
-        return $"dartboard-slice {parity}{hit}";
+        return $"dartboard-slice {tone}{hit}";
     }
 
     private async Task Hit(DartboardDart dart, string id)
@@ -282,9 +287,9 @@
 
     private readonly record struct HitMarker(int Number, string X, string Y);
 
-    private readonly record struct Slice(string Id, int SectorIndex, string Path, DartboardDart Dart);
+    private readonly record struct Slice(string Id, int SectorIndex, DartboardRing Ring, string Path, DartboardDart Dart);
 
     private readonly record struct NumberLabel(int Sector, string X, string Y);
 
-    private readonly record struct RingMark(string Text, string X, string Y);
+    private readonly record struct RingMark(string Text, string X, string Y, string ClassName);
 }
