@@ -4,6 +4,12 @@
             @(PlayerName is null ? "Очки" : $"Очки: {PlayerName}")
         </MudText>
         <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
+        @if (Remaining is int remaining)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Info" data-testid="visit-remaining">
+                Остаток @(remaining - _visit.Sum)
+            </MudChip>
+        }
         @for (var index = 0; index < 3; index++)
         {
             var slot = index;

@@ -30,6 +30,20 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
         Assert.Contains("Дротик 2", component.Markup);
         Assert.Contains("Дротик 3", component.Markup);
         Assert.DoesNotContain("Дротик 4", component.Markup);
+        Assert.Empty(component.FindAll("[data-testid=visit-remaining]"));
+    }
+
+    [Fact]
+    public void RemainingChip_UpdatesAfterEachDart()
+    {
+        var component = Render<DartboardInput>(parameters => parameters
+            .Add(p => p.Remaining, 101));
+
+        Assert.Equal("Остаток 101", component.Find("[data-testid=visit-remaining]").TextContent.Trim());
+
+        component.Find("[data-dart=x1i-20]").Click();
+
+        Assert.Equal("Остаток 81", component.Find("[data-testid=visit-remaining]").TextContent.Trim());
     }
 
     [Fact]
