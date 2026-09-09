@@ -1,0 +1,33 @@
+@using DartsLeaderboard.Application.Reports
+@inject GetWeeklyHighlightsService HighlightsService
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Baseline" Spacing="2">
+            <MudText Typo="Typo.h6">Итоги недели</MudText>
+            @if (!string.IsNullOrEmpty(Range))
+            {
+                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@Range</MudText>
+            }
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <WeeklyHighlightsPanel Items="Items" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" data-testid="week-highlights-close">Закрыть</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<WeeklyHighlightDto> Items { get; set; } = Array.Empty<WeeklyHighlightDto>();
+
+    [Parameter]
+    public string Range { get; set; } = "";
+
+    private void Close() => MudDialog.Cancel();
+}

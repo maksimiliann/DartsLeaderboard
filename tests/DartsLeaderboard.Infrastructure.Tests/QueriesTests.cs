@@ -217,4 +217,99 @@ public class QueriesTests(PostgresFixture fixture)
 
         Assert.Equal(new[] { third.Id, first.Id }, ids);
     }
+
+    [Fact]
+    public async Task WeeklyHighlights_UseFinishedMatchesInsideRange()
+    {
+        await using var context = fixture.CreateContext();
+        var players = new PlayerRepository(context);
+        var anna = Player.Create(UniqueName(), Now).Value!;
+        var ivan = Player.Create(UniqueName(), Now).Value!;
+        await players.AddAsync(anna, default);
+        await players.AddAsync(ivan, default);
+        await players.SaveChangesAsync(default);
+
+        var matches = new MatchRepository(context);
+        var weekStart = new DateTimeOffset(2031, 6, 2, 12, 0, 0, TimeSpan.Zero);
+        var weekEnd = weekStart.AddDays(7);
+
+        var x01 = Match.Start(MatchSettings.X01(40), new[] { anna.Id, ivan.Id }, weekStart).Value!;
+        var highest = Match.Start(MatchSettings.HighestTotal(1), new[] { anna.Id, ivan.Id }, weekStart.AddHours(1)).Value!;
+        var oldHighest = Match.Start(
+            MatchSettings.HighestTotal(1),
+            new[] { anna.Id, ivan.Id },
+            weekStart.AddDays(-3)).Value!;
+        var abandoned = Match.Start(
+            MatchSettings.HighestTotal(1),
+            new[] { anna.Id, ivan.Id },
+            weekStart.AddHours(2)).Value!;
+        await matches.AddAsync(x01, default);
+        await matches.AddAsync(highest, default);
+        await matches.AddAsync(oldHighest, default);
+        await matches.AddAsync(abandoned, default);
+        await matches.SaveChangesAsync(default);
+
+        x01.RecordThrow([new VisitDart(40, true)], weekStart.AddMinutes(4));
+        highest.RecordThrow(10, weekStart.AddHours(1).AddMinutes(20));
+        highest.RecordThrow(180, weekStart.AddHours(1).AddMinutes(21));
+        oldHighest.RecordThrow(180, weekStart.AddDays(-3).AddMinutes(1));
+        oldHighest.RecordThrow(0, weekStart.AddDays(-3).AddMinutes(2));
+        abandoned.RecordThrow(26, weekStart.AddHours(2).AddMinutes(1));
+        abandoned.Abandon(weekStart.AddHours(2).AddMinutes(2));
+        await matches.SaveChangesAsync(default);
+
+        var rows = await new WeeklyHighlightQueries(context).GetAsync(weekStart, weekEnd, default);
+
+        Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.MostWinsKey).HolderName);
+        Assert.Equal(ivan.Name, rows.Single(r => r.Key == WeeklyHighlights.MostLossesKey).HolderName);
+        Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.MostX01WinsKey).HolderName);
+        Assert.Equal(ivan.Name, rows.Single(r => r.Key == WeeklyHighlights.MostHighestTotalWinsKey).HolderName);
+        Assert.Equal(ivan.Name, rows.Single(r => r.Key == WeeklyHighlights.BestVisitKey).HolderName);
+        Assert.Equal("180", rows.Single(r => r.Key == WeeklyHighlights.BestVisitKey).Value);
+        Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.WorstVisitKey).HolderName);
+        Assert.Equal("10", rows.Single(r => r.Key == WeeklyHighlights.WorstVisitKey).Value);
+        Assert.Equal(ivan.Name, rows.Single(r => r.Key == WeeklyHighlights.MaxSumKey).HolderName);
+        Assert.Equal("180", rows.Single(r => r.Key == WeeklyHighlights.MaxSumKey).Value);
+        Assert.Equal("1", rows.Single(r => r.Key == WeeklyHighlights.FastestX01Key).Value);
+        Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.FastestX01Key).HolderName);
+        Assert.Equal($"{anna.Name}, {ivan.Name}", rows.Single(r => r.Key == WeeklyHighlights.FastestMatchKey).HolderName);
+        Assert.Equal("4:00", rows.Single(r => r.Key == WeeklyHighlights.FastestMatchKey).Value);
+        Assert.Null(rows.Single(r => r.Key == WeeklyHighlights.Most26Key).HolderName);
+    }
+
+    [Fact]
+    public async Task WeeklyHighlights_Count21And26InEveryMode()
+    {
+        await using var context = fixture.CreateContext();
+        var players = new PlayerRepository(context);
+        var anna = Player.Create(UniqueName(), Now).Value!;
+        var ivan = Player.Create(UniqueName(), Now).Value!;
+        await players.AddAsync(anna, default);
+        await players.AddAsync(ivan, default);
+        await players.SaveChangesAsync(default);
+
+        var weekStart = new DateTimeOffset(2032, 6, 7, 12, 0, 0, TimeSpan.Zero);
+        var matches = new MatchRepository(context);
+        var x01 = Match.Start(MatchSettings.X01(101), new[] { anna.Id, ivan.Id }, weekStart).Value!;
+        var highest = Match.Start(MatchSettings.HighestTotal(1), new[] { anna.Id, ivan.Id }, weekStart.AddHours(1)).Value!;
+        await matches.AddAsync(x01, default);
+        await matches.AddAsync(highest, default);
+        await matches.SaveChangesAsync(default);
+
+        x01.RecordThrow(26, weekStart.AddMinutes(1));
+        x01.RecordThrow(0, weekStart.AddMinutes(2));
+        x01.RecordThrow([new VisitDart(50, true)], weekStart.AddMinutes(3));
+        x01.RecordThrow(0, weekStart.AddMinutes(4));
+        x01.RecordThrow([new VisitDart(25, true)], weekStart.AddMinutes(5));
+        highest.RecordThrow(21, weekStart.AddHours(1).AddMinutes(1));
+        highest.RecordThrow(40, weekStart.AddHours(1).AddMinutes(2));
+        await matches.SaveChangesAsync(default);
+
+        var rows = await new WeeklyHighlightQueries(context).GetAsync(weekStart, weekStart.AddDays(7), default);
+
+        Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.Most26Key).HolderName);
+        Assert.Equal("1", rows.Single(r => r.Key == WeeklyHighlights.Most26Key).Value);
+        Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.Most21Key).HolderName);
+        Assert.Equal("1", rows.Single(r => r.Key == WeeklyHighlights.Most21Key).Value);
+    }
 }

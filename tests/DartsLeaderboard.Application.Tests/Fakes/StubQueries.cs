@@ -24,6 +24,15 @@ internal class StubWinArchiveQueries : IWinArchiveQueries
         Task.CompletedTask;
 }
 
+internal sealed class StubWeeklyHighlightQueries : IWeeklyHighlightQueries
+{
+    public Task<IReadOnlyList<WeeklyHighlightDto>> GetAsync(
+        DateTimeOffset weekStart,
+        DateTimeOffset weekEnd,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<WeeklyHighlightDto>>(Array.Empty<WeeklyHighlightDto>());
+}
+
 internal sealed class StubMatchQueries : IMatchQueries
 {
     public Task<IReadOnlyList<MatchListItemDto>> ListAsync(MatchListFilter filter, CancellationToken cancellationToken) =>

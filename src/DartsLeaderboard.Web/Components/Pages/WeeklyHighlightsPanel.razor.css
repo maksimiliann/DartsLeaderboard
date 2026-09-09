@@ -1,0 +1,10 @@
+.week-highlights-title {
+    border-bottom: 1px dotted currentColor;
+    cursor: help;
+}
+
+.week-highlights-value {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}

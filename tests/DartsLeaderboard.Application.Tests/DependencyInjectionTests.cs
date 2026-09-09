@@ -23,6 +23,7 @@ public class DependencyInjectionTests
         services.AddSingleton<IRecordQueries, StubRecordQueries>();
         services.AddSingleton<IMatchQueries, StubMatchQueries>();
         services.AddSingleton<IWinArchiveQueries, StubWinArchiveQueries>();
+        services.AddSingleton<IWeeklyHighlightQueries, StubWeeklyHighlightQueries>();
 
         using var provider = services.BuildServiceProvider(validateScopes: true);
         using var scope = provider.CreateScope();
@@ -41,5 +42,6 @@ public class DependencyInjectionTests
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetMatchListService>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetWinArchiveService>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<SaveWinArchiveService>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetWeeklyHighlightsService>());
     }
 }

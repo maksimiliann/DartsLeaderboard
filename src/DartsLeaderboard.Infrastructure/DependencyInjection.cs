@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IRecordQueries, RecordQueries>();
         services.AddScoped<IMatchQueries, MatchQueries>();
         services.AddScoped<IWinArchiveQueries, WinArchiveQueries>();
+        services.AddScoped<IWeeklyHighlightQueries, WeeklyHighlightQueries>();
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IMatchNotifier, InMemoryMatchNotifier>();

@@ -3,6 +3,8 @@
 @inject GetLeaderboardService LeaderboardService
 @inject GetRecordsService RecordsService
 @inject GetMatchListService MatchListService
+@inject IDialogService DialogService
+@inject GetWeeklyHighlightsService HighlightsService
 @inject NavigationManager Navigation
 
 <PageTitle>Лидерборд</PageTitle>
@@ -10,6 +12,11 @@
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
     <MudText Typo="Typo.h5">Лидерборд</MudText>
     <MudSpacer />
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+               data-testid="week-highlights"
+               OnClick="OpenWeekHighlights">
+        Итоги недели
+    </MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Primary"
                StartIcon="@Icons.Material.Filled.Add"
                OnClick="@(() => Navigation.NavigateTo("/match/new"))">
@@ -81,5 +88,24 @@
         _records = await RecordsService.ExecuteAsync();
         _unfinished = await MatchListService.ExecuteAsync(MatchListFilter.InProgress);
         _loading = false;
+    }
+
+    private async Task OpenWeekHighlights()
+    {
+        var highlights = await HighlightsService.ExecuteAsync();
+        var range = WeekRange.FormatLabel(highlights.WeekStart, highlights.WeekEnd);
+        var parameters = new DialogParameters<WeeklyHighlightsDialog>
+        {
+            { dialog => dialog.Items, highlights.Items },
+            { dialog => dialog.Range, range }
+        };
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            CloseButton = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+        await DialogService.ShowAsync<WeeklyHighlightsDialog>("Итоги недели", parameters, options);
     }
 }

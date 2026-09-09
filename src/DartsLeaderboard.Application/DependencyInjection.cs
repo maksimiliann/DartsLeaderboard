@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<GetMatchListService>();
         services.AddScoped<GetWinArchiveService>();
         services.AddScoped<SaveWinArchiveService>();
+        services.AddScoped<GetWeeklyHighlightsService>();
 
         return services;
     }

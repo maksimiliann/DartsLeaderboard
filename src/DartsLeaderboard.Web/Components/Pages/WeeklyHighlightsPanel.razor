@@ -1,0 +1,23 @@
+<MudPaper Class="pa-2">
+    <MudTable Items="Items" Dense="true" Hover="true" Breakpoint="Breakpoint.None" Elevation="0">
+        <HeaderContent>
+            <MudTh>Номинация</MudTh>
+            <MudTh Class="week-highlights-value">Значение</MudTh>
+            <MudTh>Игрок</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Номинация">
+                <MudTooltip Text="@context.Description">
+                    <span class="week-highlights-title" data-testid="@($"week-stat-{context.Key}")">@context.Title</span>
+                </MudTooltip>
+            </MudTd>
+            <MudTd DataLabel="Значение" Class="week-highlights-value">@(context.Value ?? "—")</MudTd>
+            <MudTd DataLabel="Игрок">@(context.Value is null ? "—" : context.HolderName)</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<WeeklyHighlightDto> Items { get; set; } = Array.Empty<WeeklyHighlightDto>();
+}
