@@ -55,6 +55,11 @@ public sealed class WeeklyHighlightQueries(DartsDbContext context) : IWeeklyHigh
                 match.FinishedAt - match.StartedAt,
                 match.FinishedAt));
 
+            var lastPlaceIds = LastPlaceIds(
+                match.Mode,
+                match.Participants.Select(participant => participant.Id),
+                match.Throws.Select(visit => (visit.ParticipantId, visit.Points)));
+
             foreach (var participant in match.Participants)
             {
                 var acc = GetOrAdd(players, participant.PlayerId, participant.Name);
@@ -93,7 +98,8 @@ public sealed class WeeklyHighlightQueries(DartsDbContext context) : IWeeklyHigh
                         acc.WinsHighestTotalAt = match.FinishedAt;
                     }
                 }
-                else if (match.WinnerParticipantId is not null)
+
+                if (IsLoss(match.Mode, match.WinnerParticipantId, participant.Id, lastPlaceIds))
                 {
                     acc.Losses++;
                     acc.LossesAt = match.FinishedAt;
@@ -144,6 +150,49 @@ public sealed class WeeklyHighlightQueries(DartsDbContext context) : IWeeklyHigh
         }
 
         return WeeklyHighlights.From(players.Values.Select(acc => acc.ToFacts()).ToList(), matchFacts);
+    }
+
+    private static bool IsLoss(
+        GameMode mode,
+        int? winnerParticipantId,
+        int participantId,
+        IReadOnlySet<int> lastPlaceIds)
+    {
+        if (mode == GameMode.X01)
+        {
+            return winnerParticipantId is not null && winnerParticipantId != participantId;
+        }
+
+        return lastPlaceIds.Contains(participantId);
+    }
+
+    private static HashSet<int> LastPlaceIds(
+        GameMode mode,
+        IEnumerable<int> participantIds,
+        IEnumerable<(int ParticipantId, int Points)> throws)
+    {
+        if (mode != GameMode.HighestTotal)
+        {
+            return [];
+        }
+
+        var ids = participantIds.ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var totals = ids
+            .Select(id => (Id: id, Total: throws.Where(visit => visit.ParticipantId == id).Sum(visit => visit.Points)))
+            .ToList();
+        var min = totals.Min(row => row.Total);
+        var max = totals.Max(row => row.Total);
+        if (min >= max)
+        {
+            return [];
+        }
+
+        return totals.Where(row => row.Total == min).Select(row => row.Id).ToHashSet();
     }
 
     private static PlayerAcc GetOrAdd(Dictionary<int, PlayerAcc> players, int playerId, string name)

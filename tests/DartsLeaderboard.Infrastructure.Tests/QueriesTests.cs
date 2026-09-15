@@ -312,4 +312,110 @@ public class QueriesTests(PostgresFixture fixture)
         Assert.Equal(anna.Name, rows.Single(r => r.Key == WeeklyHighlights.Most21Key).HolderName);
         Assert.Equal("1", rows.Single(r => r.Key == WeeklyHighlights.Most21Key).Value);
     }
+
+    [Fact]
+    public async Task WeeklyHighlights_HighestTotal_CountsOnlyLastPlaceAsLoss()
+    {
+        await using var context = fixture.CreateContext();
+        var token = Guid.NewGuid().ToString("N")[..8];
+        var players = new PlayerRepository(context);
+        var first = Player.Create($"A-{token}", Now).Value!;
+        var middle = Player.Create($"B-{token}", Now).Value!;
+        var last = Player.Create($"C-{token}", Now).Value!;
+        await players.AddAsync(first, default);
+        await players.AddAsync(middle, default);
+        await players.AddAsync(last, default);
+        await players.SaveChangesAsync(default);
+
+        var weekStart = new DateTimeOffset(2033, 6, 6, 12, 0, 0, TimeSpan.Zero);
+        var matches = new MatchRepository(context);
+        var highest = Match.Start(
+            MatchSettings.HighestTotal(1),
+            new[] { first.Id, middle.Id, last.Id },
+            weekStart).Value!;
+        await matches.AddAsync(highest, default);
+        await matches.SaveChangesAsync(default);
+        highest.RecordThrow(100, weekStart.AddMinutes(1));
+        highest.RecordThrow(80, weekStart.AddMinutes(2));
+        highest.RecordThrow(40, weekStart.AddMinutes(3));
+        await matches.SaveChangesAsync(default);
+
+        var rows = await new WeeklyHighlightQueries(context).GetAsync(weekStart, weekStart.AddDays(7), default);
+
+        var losses = rows.Single(r => r.Key == WeeklyHighlights.MostLossesKey);
+        Assert.Equal(last.Name, losses.HolderName);
+        Assert.Equal("1", losses.Value);
+    }
+
+    [Fact]
+    public async Task WeeklyHighlights_HighestTotal_CountsLastPlaceWhenFirstIsDraw()
+    {
+        await using var context = fixture.CreateContext();
+        var token = Guid.NewGuid().ToString("N")[..8];
+        var players = new PlayerRepository(context);
+        var tiedA = Player.Create($"A-{token}", Now).Value!;
+        var tiedB = Player.Create($"B-{token}", Now).Value!;
+        var last = Player.Create($"C-{token}", Now).Value!;
+        await players.AddAsync(tiedA, default);
+        await players.AddAsync(tiedB, default);
+        await players.AddAsync(last, default);
+        await players.SaveChangesAsync(default);
+
+        var weekStart = new DateTimeOffset(2034, 6, 5, 12, 0, 0, TimeSpan.Zero);
+        var matches = new MatchRepository(context);
+        var highest = Match.Start(
+            MatchSettings.HighestTotal(1),
+            new[] { tiedA.Id, tiedB.Id, last.Id },
+            weekStart).Value!;
+        await matches.AddAsync(highest, default);
+        await matches.SaveChangesAsync(default);
+        highest.RecordThrow(80, weekStart.AddMinutes(1));
+        highest.RecordThrow(80, weekStart.AddMinutes(2));
+        highest.RecordThrow(40, weekStart.AddMinutes(3));
+        await matches.SaveChangesAsync(default);
+
+        var rows = await new WeeklyHighlightQueries(context).GetAsync(weekStart, weekStart.AddDays(7), default);
+
+        var losses = rows.Single(r => r.Key == WeeklyHighlights.MostLossesKey);
+        Assert.Equal(last.Name, losses.HolderName);
+        Assert.Equal("1", losses.Value);
+    }
+
+    [Fact]
+    public async Task WeeklyHighlights_X01_CountsEveryNonWinnerAsLoss()
+    {
+        await using var context = fixture.CreateContext();
+        var token = Guid.NewGuid().ToString("N")[..8];
+        var players = new PlayerRepository(context);
+        var winner = Player.Create($"A-{token}", Now).Value!;
+        var second = Player.Create($"B-{token}", Now).Value!;
+        var third = Player.Create($"C-{token}", Now).Value!;
+        await players.AddAsync(winner, default);
+        await players.AddAsync(second, default);
+        await players.AddAsync(third, default);
+        await players.SaveChangesAsync(default);
+
+        var weekStart = new DateTimeOffset(2035, 6, 3, 12, 0, 0, TimeSpan.Zero);
+        var matches = new MatchRepository(context);
+        var firstMatch = Match.Start(
+            MatchSettings.X01(40),
+            new[] { winner.Id, second.Id, third.Id },
+            weekStart).Value!;
+        var secondMatch = Match.Start(
+            MatchSettings.X01(40),
+            new[] { winner.Id, third.Id },
+            weekStart.AddHours(1)).Value!;
+        await matches.AddAsync(firstMatch, default);
+        await matches.AddAsync(secondMatch, default);
+        await matches.SaveChangesAsync(default);
+        firstMatch.RecordThrow([new VisitDart(40, true)], weekStart.AddMinutes(1));
+        secondMatch.RecordThrow([new VisitDart(40, true)], weekStart.AddHours(1).AddMinutes(1));
+        await matches.SaveChangesAsync(default);
+
+        var rows = await new WeeklyHighlightQueries(context).GetAsync(weekStart, weekStart.AddDays(7), default);
+
+        var losses = rows.Single(r => r.Key == WeeklyHighlights.MostLossesKey);
+        Assert.Equal(third.Name, losses.HolderName);
+        Assert.Equal("2", losses.Value);
+    }
 }

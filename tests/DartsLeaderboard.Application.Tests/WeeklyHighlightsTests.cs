@@ -36,21 +36,21 @@ public class WeeklyHighlightsTests
         Assert.Equal(
             new[]
             {
-                "наныл недели",
-                "никогда не сдавайся",
-                "меткий глаз",
-                "и ветер не помеха",
-                "повезло, повезло",
-                "опять дротики виноваты",
-                "мистер зеленый",
-                "мистер красный",
-                "мистер коричневый",
-                "за ваше здоровье...",
-                "...и за мое очко",
-                "скорострел",
-                "тугосеря",
-                "может еще одну?",
-                "лишь бы не работать"
+                WeeklyHighlights.MostWinsTitle,
+                WeeklyHighlights.MostLossesTitle,
+                WeeklyHighlights.MostX01WinsTitle,
+                WeeklyHighlights.MostHighestTotalWinsTitle,
+                WeeklyHighlights.BestVisitTitle,
+                WeeklyHighlights.WorstVisitTitle,
+                WeeklyHighlights.MaxSumTitle,
+                WeeklyHighlights.MinSumTitle,
+                WeeklyHighlights.ClosestToAverageTitle,
+                WeeklyHighlights.Most26Title,
+                WeeklyHighlights.Most21Title,
+                WeeklyHighlights.FastestX01Title,
+                WeeklyHighlights.SlowestX01Title,
+                WeeklyHighlights.FastestMatchTitle,
+                WeeklyHighlights.LongestMatchTitle
             },
             rows.Select(r => r.Title));
         Assert.Equal(
@@ -97,7 +97,7 @@ public class WeeklyHighlightsTests
     }
 
     [Fact]
-    public void From_PicksEarlierHolderWhenWinsTied()
+    public void From_ListsAllHoldersWhenWinsTied()
     {
         var rows = WeeklyHighlights.From(
             [
@@ -106,7 +106,9 @@ public class WeeklyHighlightsTests
             ],
             []);
 
-        Assert.Equal("Анна", Single(rows, WeeklyHighlights.MostWinsKey).HolderName);
+        var row = Single(rows, WeeklyHighlights.MostWinsKey);
+        Assert.Equal("Анна, Иван", row.HolderName);
+        Assert.Equal("2", row.Value);
     }
 
     [Fact]
@@ -163,7 +165,7 @@ public class WeeklyHighlightsTests
     }
 
     [Fact]
-    public void From_ClosestToAverage_PicksEarlierWhenDistanceTied()
+    public void From_ClosestToAverage_ListsAllWhenDistanceTied()
     {
         var rows = WeeklyHighlights.From(
             [
@@ -172,7 +174,26 @@ public class WeeklyHighlightsTests
             ],
             []);
 
-        Assert.Equal("Анна", Single(rows, WeeklyHighlights.ClosestToAverageKey).HolderName);
+        var row = Single(rows, WeeklyHighlights.ClosestToAverageKey);
+        Assert.Equal("Анна, Иван", row.HolderName);
+        Assert.Equal("100, 200", row.Value);
+    }
+
+    [Fact]
+    public void From_ListsAllHoldersWhenMost21Tied()
+    {
+        var rows = WeeklyHighlights.From(
+            [
+                Player("Анна", count21: 3, at: T0),
+                Player("Иван", count21: 3, at: T1),
+                Player("Пётр", count21: 3, at: T1.AddMinutes(1)),
+                Player("Олег", count21: 1, at: T0)
+            ],
+            []);
+
+        var row = Single(rows, WeeklyHighlights.Most21Key);
+        Assert.Equal("Анна, Иван, Пётр", row.HolderName);
+        Assert.Equal("3", row.Value);
     }
 
     [Fact]
@@ -224,6 +245,21 @@ public class WeeklyHighlightsTests
         Assert.Equal("1:05", Single(rows, WeeklyHighlights.FastestMatchKey).Value);
         Assert.Equal("Пётр, Олег", Single(rows, WeeklyHighlights.LongestMatchKey).HolderName);
         Assert.Equal("12:00", Single(rows, WeeklyHighlights.LongestMatchKey).Value);
+    }
+
+    [Fact]
+    public void From_ListsAllParticipantsWhenMatchDurationTied()
+    {
+        var rows = WeeklyHighlights.From(
+            [],
+            [
+                new WeeklyMatchFacts("Анна, Иван", TimeSpan.FromSeconds(65), T1),
+                new WeeklyMatchFacts("Пётр, Олег", TimeSpan.FromSeconds(65), T0)
+            ]);
+
+        var row = Single(rows, WeeklyHighlights.FastestMatchKey);
+        Assert.Equal("Анна, Иван, Пётр, Олег", row.HolderName);
+        Assert.Equal("1:05", row.Value);
     }
 
     private static WeeklyHighlightDto Single(IReadOnlyList<WeeklyHighlightDto> rows, string key) =>

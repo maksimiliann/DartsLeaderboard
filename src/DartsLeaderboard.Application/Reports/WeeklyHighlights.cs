@@ -37,7 +37,7 @@ public static class WeeklyHighlights
     public const string LongestMatchTitle = "Лишь бы не работать";
 
     public const string MostWinsDescription = "Больше всех побед за неделю во всех режимах";
-    public const string MostLossesDescription = "Больше всех поражений за неделю";
+    public const string MostLossesDescription = "Не победы в x01 и последние места в «максимуме»";
     public const string MostX01WinsDescription = "Больше всех побед в x01";
     public const string MostHighestTotalWinsDescription = "Больше всех побед в «максимуме»";
     public const string BestVisitDescription = "Лучший бросок в «максимуме»";
@@ -56,24 +56,19 @@ public static class WeeklyHighlights
         IReadOnlyList<WeeklyPlayerFacts> players,
         IReadOnlyList<WeeklyMatchFacts> matches) =>
         [
-            PickMax(MostWinsKey, MostWinsTitle, players, p => Positive(p.Wins), p => p.WinsAt),
-            PickMax(MostLossesKey, MostLossesTitle, players, p => Positive(p.Losses), p => p.LossesAt),
-            PickMax(MostX01WinsKey, MostX01WinsTitle, players, p => Positive(p.WinsX01), p => p.WinsX01At),
-            PickMax(
-                MostHighestTotalWinsKey,
-                MostHighestTotalWinsTitle,
-                players,
-                p => Positive(p.WinsHighestTotal),
-                p => p.WinsHighestTotalAt),
-            PickMax(BestVisitKey, BestVisitTitle, players, p => p.BestVisit, p => p.BestVisitAt),
-            PickMin(WorstVisitKey, WorstVisitTitle, players, p => p.WorstVisit, p => p.WorstVisitAt),
-            PickMax(MaxSumKey, MaxSumTitle, players, p => p.HighestTotalSum, p => p.HighestTotalSumAt),
-            PickMin(MinSumKey, MinSumTitle, players, p => p.HighestTotalSum, p => p.HighestTotalSumAt),
+            PickMax(MostWinsKey, MostWinsTitle, players, p => Positive(p.Wins)),
+            PickMax(MostLossesKey, MostLossesTitle, players, p => Positive(p.Losses)),
+            PickMax(MostX01WinsKey, MostX01WinsTitle, players, p => Positive(p.WinsX01)),
+            PickMax(MostHighestTotalWinsKey, MostHighestTotalWinsTitle, players, p => Positive(p.WinsHighestTotal)),
+            PickMax(BestVisitKey, BestVisitTitle, players, p => p.BestVisit),
+            PickMin(WorstVisitKey, WorstVisitTitle, players, p => p.WorstVisit),
+            PickMax(MaxSumKey, MaxSumTitle, players, p => p.HighestTotalSum),
+            PickMin(MinSumKey, MinSumTitle, players, p => p.HighestTotalSum),
             PickClosestToAverage(players),
-            PickMax(Most26Key, Most26Title, players, p => Positive(p.Count26), p => p.Count26At),
-            PickMax(Most21Key, Most21Title, players, p => Positive(p.Count21), p => p.Count21At),
-            PickMin(FastestX01Key, FastestX01Title, players, p => p.FastestX01Rounds, p => p.FastestX01At),
-            PickMax(SlowestX01Key, SlowestX01Title, players, p => p.SlowestX01Rounds, p => p.SlowestX01At),
+            PickMax(Most26Key, Most26Title, players, p => Positive(p.Count26)),
+            PickMax(Most21Key, Most21Title, players, p => Positive(p.Count21)),
+            PickMin(FastestX01Key, FastestX01Title, players, p => p.FastestX01Rounds),
+            PickMax(SlowestX01Key, SlowestX01Title, players, p => p.SlowestX01Rounds),
             PickMatch(FastestMatchKey, FastestMatchTitle, matches, longest: false),
             PickMatch(LongestMatchKey, LongestMatchTitle, matches, longest: true)
         ];
@@ -84,45 +79,45 @@ public static class WeeklyHighlights
         string key,
         string title,
         IEnumerable<WeeklyPlayerFacts> players,
-        Func<WeeklyPlayerFacts, int?> value,
-        Func<WeeklyPlayerFacts, DateTimeOffset?> at) =>
-        Pick(key, title, players, value, at, descending: true);
+        Func<WeeklyPlayerFacts, int?> value) =>
+        Pick(key, title, players, value, descending: true);
 
     private static WeeklyHighlightDto PickMin(
         string key,
         string title,
         IEnumerable<WeeklyPlayerFacts> players,
-        Func<WeeklyPlayerFacts, int?> value,
-        Func<WeeklyPlayerFacts, DateTimeOffset?> at) =>
-        Pick(key, title, players, value, at, descending: false);
+        Func<WeeklyPlayerFacts, int?> value) =>
+        Pick(key, title, players, value, descending: false);
 
     private static WeeklyHighlightDto Pick(
         string key,
         string title,
         IEnumerable<WeeklyPlayerFacts> players,
         Func<WeeklyPlayerFacts, int?> value,
-        Func<WeeklyPlayerFacts, DateTimeOffset?> at,
         bool descending)
     {
         var candidates = players
-            .Select(player => new { player.Name, Value = value(player), At = at(player) })
-            .Where(row => row.Value is not null);
+            .Select(player => new { player.Name, Value = value(player) })
+            .Where(row => row.Value is not null)
+            .ToList();
+        if (candidates.Count == 0)
+        {
+            return Unset(key, title);
+        }
 
-        var best = descending
-            ? candidates
-                .OrderByDescending(row => row.Value)
-                .ThenBy(row => row.At ?? DateTimeOffset.MaxValue)
-                .ThenBy(row => row.Name, StringComparer.Ordinal)
-                .FirstOrDefault()
-            : candidates
-                .OrderBy(row => row.Value)
-                .ThenBy(row => row.At ?? DateTimeOffset.MaxValue)
-                .ThenBy(row => row.Name, StringComparer.Ordinal)
-                .FirstOrDefault();
+        var bestValue = descending
+            ? candidates.Max(row => row.Value)
+            : candidates.Min(row => row.Value);
+        var holders = candidates
+            .Where(row => row.Value == bestValue)
+            .OrderBy(row => row.Name, StringComparer.Ordinal)
+            .ToList();
 
-        return best is null
-            ? Unset(key, title)
-            : Highlight(key, title, best.Name, best.Value!.Value.ToString());
+        return Highlight(
+            key,
+            title,
+            JoinNames(holders.Select(row => row.Name)),
+            bestValue!.Value.ToString());
     }
 
     private static WeeklyHighlightDto PickClosestToAverage(IReadOnlyList<WeeklyPlayerFacts> players)
@@ -134,17 +129,17 @@ public static class WeeklyHighlights
         }
 
         var average = withSum.Average(player => player.HighestTotalSum!.Value);
-        var best = withSum
-            .OrderBy(player => Math.Abs(player.HighestTotalSum!.Value - average))
-            .ThenBy(player => player.HighestTotalSumAt ?? DateTimeOffset.MaxValue)
-            .ThenBy(player => player.Name, StringComparer.Ordinal)
-            .First();
+        var bestDistance = withSum.Min(player => Math.Abs(player.HighestTotalSum!.Value - average));
+        var holders = withSum
+            .Where(player => Math.Abs(player.HighestTotalSum!.Value - average) == bestDistance)
+            .OrderBy(player => player.Name, StringComparer.Ordinal)
+            .ToList();
 
         return Highlight(
             ClosestToAverageKey,
             ClosestToAverageTitle,
-            best.Name,
-            best.HighestTotalSum!.Value.ToString());
+            JoinNames(holders.Select(player => player.Name)),
+            JoinNames(holders.Select(player => player.HighestTotalSum!.Value.ToString()).Distinct()));
     }
 
     private static WeeklyHighlightDto PickMatch(
@@ -153,21 +148,23 @@ public static class WeeklyHighlights
         IReadOnlyList<WeeklyMatchFacts> matches,
         bool longest)
     {
-        var ordered = longest
-            ? matches
-                .OrderByDescending(match => match.Duration)
-                .ThenBy(match => match.FinishedAt)
-                .ThenBy(match => match.Participants, StringComparer.Ordinal)
-            : matches
-                .OrderBy(match => match.Duration)
-                .ThenBy(match => match.FinishedAt)
-                .ThenBy(match => match.Participants, StringComparer.Ordinal);
+        if (matches.Count == 0)
+        {
+            return Unset(key, title);
+        }
 
-        var best = ordered.FirstOrDefault();
-        return best is null
-            ? Unset(key, title)
-            : Highlight(key, title, best.Participants, FormatDuration(best.Duration));
+        var bestDuration = longest
+            ? matches.Max(match => match.Duration)
+            : matches.Min(match => match.Duration);
+        var names = matches
+            .Where(match => match.Duration == bestDuration)
+            .SelectMany(match => match.Participants.Split(", ", StringSplitOptions.None))
+            .Distinct(StringComparer.Ordinal);
+
+        return Highlight(key, title, JoinNames(names), FormatDuration(bestDuration));
     }
+
+    private static string JoinNames(IEnumerable<string> names) => string.Join(", ", names);
 
     internal static string FormatDuration(TimeSpan duration)
     {
