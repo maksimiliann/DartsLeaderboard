@@ -8,7 +8,18 @@ window.dartsSpeech = (function () {
     let phase = "idle";
     let ended = null;
 
+    function allowPlaybackDuringSilentMode() {
+        try {
+            const session = navigator.audioSession;
+            if (session && session.type !== "playback") {
+                session.type = "playback";
+            }
+        } catch (ignored) {
+        }
+    }
+
     document.addEventListener("pointerdown", function () {
+        allowPlaybackDuringSilentMode();
         if (context.state !== "running") {
             context.resume();
         }
@@ -65,6 +76,7 @@ window.dartsSpeech = (function () {
             phase = "idle";
         },
         toggle: async function (nextText) {
+            allowPlaybackDuringSilentMode();
             if (context.state !== "running") {
                 await context.resume();
             }
