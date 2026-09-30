@@ -1,5 +1,19 @@
 <MudPaper Class="pa-4">
-    <MudText Typo="Typo.overline" Class="mb-2">Сейчас</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudText Typo="Typo.overline">Сейчас</MudText>
+        <MudSpacer />
+        @if (ShowSpeakButton)
+        {
+            <MudButton Variant="Variant.Outlined"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.VolumeUp"
+                       Disabled="Speaking"
+                       OnClick="OnSpeak"
+                       data-testid="speak-results">
+                Озвучить результат
+            </MudButton>
+        }
+    </MudStack>
     @foreach (var row in Standings)
     {
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="py-1" Spacing="2">
@@ -14,4 +28,10 @@
 
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<StandingDto> Standings { get; set; } = Array.Empty<StandingDto>();
+
+    [Parameter] public bool ShowSpeakButton { get; set; }
+
+    [Parameter] public bool Speaking { get; set; }
+
+    [Parameter] public EventCallback OnSpeak { get; set; }
 }

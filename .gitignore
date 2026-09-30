@@ -8,3 +8,7 @@ obj/
 .env
 
 .superpowers/
+
+.venv/
+__pycache__/
+*.pyc

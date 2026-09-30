@@ -2,6 +2,7 @@
 @using DartsLeaderboard.Application.Abstractions
 @using DartsLeaderboard.Application.Matches
 @using DartsLeaderboard.Web.Components.Match
+@using DartsLeaderboard.Web.Speech
 @implements IDisposable
 @inject GetMatchStateService GetState
 @inject RecordThrowService RecordThrow
@@ -10,6 +11,7 @@
 @inject IMatchNotifier Notifier
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>Матч #@MatchId</PageTitle>
 
@@ -58,7 +60,10 @@ else
                 @if (_state.Standings.Count > 0)
                 {
                     <MudItem xs="12" sm="6">
-                        <MatchStandings Standings="_state.Standings" />
+                        <MatchStandings Standings="_state.Standings"
+                                        ShowSpeakButton="@CanSpeakResults"
+                                        Speaking="_speaking"
+                                        OnSpeak="SpeakResults" />
                     </MudItem>
                 }
                 <MudItem xs="12" sm="@(_state.Standings.Count > 0 ? 6 : 12)">
@@ -83,6 +88,9 @@ else
 @code {
     private MatchStateDto? _state;
     private IDisposable? _subscription;
+    private bool _speaking;
+
+    private bool CanSpeakResults => _state is not null && ResultAnnouncement.CanSpeak(_state);
 
     [Parameter] public int MatchId { get; set; }
 
@@ -139,6 +147,28 @@ else
         }
 
         Snackbar.Add(result.ErrorMessage!, Severity.Warning);
+    }
+
+    private async Task SpeakResults()
+    {
+        if (_state is null || _speaking)
+        {
+            return;
+        }
+
+        _speaking = true;
+        try
+        {
+            await JS.InvokeVoidAsync("dartsSpeech.playText", ResultAnnouncement.Format(_state.Standings));
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException)
+        {
+            Snackbar.Add("Не удалось озвучить результат", Severity.Error);
+        }
+        finally
+        {
+            _speaking = false;
+        }
     }
 
     private async Task Abandon()

@@ -14,13 +14,32 @@ services:
       retries: 10
     restart: unless-stopped
 
+  silero:
+    build: ./tools/silero
+    environment:
+      SILERO_MODEL_PATH: /app/v5_5_ru.pt
+    ports:
+      - "8765:8765"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+
   web:
     build: .
     depends_on:
       db:
         condition: service_healthy
+      silero:
+        condition: service_healthy
     environment:
       ConnectionStrings__Darts: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Speech__Enabled: "true"
+      Speech__BaseUrl: http://silero:8765
+      Speech__Speaker: eugene
     ports:
       - "8080:8080"
     restart: unless-stopped
