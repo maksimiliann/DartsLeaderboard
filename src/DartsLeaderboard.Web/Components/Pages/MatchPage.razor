@@ -63,6 +63,8 @@ else
                         <MatchStandings Standings="_state.Standings"
                                         ShowSpeakButton="@CanSpeakResults"
                                         Speaking="_speaking"
+                                        SpeakLabel="@SpeakButtonText"
+                                        SpeakIcon="@SpeakButtonIcon"
                                         OnSpeak="SpeakResults" />
                     </MudItem>
                 }
@@ -88,9 +90,20 @@ else
 @code {
     private MatchStateDto? _state;
     private IDisposable? _subscription;
+    private DotNetObjectReference<MatchPage>? _speechRef;
     private bool _speaking;
+    private SpeechPlayback _playback = SpeechPlayback.Idle;
 
     private bool CanSpeakResults => _state is not null && ResultAnnouncement.CanSpeak(_state);
+
+    private string SpeakButtonText => ResultAnnouncement.ButtonText(_playback);
+
+    private string SpeakButtonIcon => _playback switch
+    {
+        SpeechPlayback.Playing => Icons.Material.Filled.Pause,
+        SpeechPlayback.Paused => Icons.Material.Filled.PlayArrow,
+        _ => Icons.Material.Filled.VolumeUp
+    };
 
     [Parameter] public int MatchId { get; set; }
 
@@ -98,6 +111,17 @@ else
     {
         await Reload();
         _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(OnMatchChangedAsync));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _speechRef is not null)
+        {
+            return;
+        }
+
+        _speechRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("dartsSpeech.setEnded", _speechRef);
     }
 
     private async Task OnMatchChangedAsync()
@@ -159,16 +183,30 @@ else
         _speaking = true;
         try
         {
-            await JS.InvokeVoidAsync("dartsSpeech.playText", ResultAnnouncement.Format(_state.Standings));
+            var state = await JS.InvokeAsync<string>("dartsSpeech.toggle", ResultAnnouncement.Format(_state.Standings));
+            _playback = state switch
+            {
+                "playing" => SpeechPlayback.Playing,
+                "paused" => SpeechPlayback.Paused,
+                _ => SpeechPlayback.Idle
+            };
         }
         catch (Exception exception) when (exception is JSException or JSDisconnectedException)
         {
+            _playback = SpeechPlayback.Idle;
             Snackbar.Add("Не удалось озвучить результат", Severity.Error);
         }
         finally
         {
             _speaking = false;
         }
+    }
+
+    [JSInvokable]
+    public Task OnSpeechEnded()
+    {
+        _playback = SpeechPlayback.Idle;
+        return InvokeAsync(StateHasChanged);
     }
 
     private async Task Abandon()
@@ -186,7 +224,19 @@ else
         Navigation.NavigateTo("/");
     }
 
-    public void Dispose() => Unsubscribe();
+    public void Dispose()
+    {
+        _speechRef?.Dispose();
+        try
+        {
+            _ = JS.InvokeVoidAsync("dartsSpeech.stop");
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        Unsubscribe();
+    }
 
     private void Unsubscribe()
     {

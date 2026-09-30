@@ -20,6 +20,13 @@ public static class ResultAnnouncement
         "Десятое"
     ];
 
+    public static string ButtonText(SpeechPlayback playback) => playback switch
+    {
+        SpeechPlayback.Playing => "Пауза",
+        SpeechPlayback.Paused => "Продолжить",
+        _ => "Озвучить результат"
+    };
+
     public static bool CanSpeak(MatchStateDto state) =>
         !state.IsInProgress &&
         state.StatusTitle is "Завершён" or "Ничья" &&
@@ -32,46 +39,29 @@ public static class ResultAnnouncement
             return string.Empty;
         }
 
-        var text = new StringBuilder("<speak>");
-        for (var i = 0; i < standings.Count; i++)
+        var text = new StringBuilder("<speak><prosody rate=\"slow\">");
+        foreach (var row in standings)
         {
-            if (i > 0)
-            {
-                text.Append("<break time=\"400ms\"/>");
-            }
-
-            var row = standings[i];
+            text.Append("<s>");
             text.Append(Place(row.Place));
             text.Append(" место. ");
             text.Append(WebUtility.HtmlEncode(row.PlayerName));
             text.Append(". ");
-            text.Append(row.Total);
-            text.Append(' ');
-            text.Append(PointsWord(row.Total));
-            text.Append('.');
+            text.Append(RussianCardinal.Points(row.Total));
+            text.Append(".</s>");
         }
 
-        text.Append("</speak>");
+        text.Append("</prosody></speak>");
         return text.ToString();
     }
 
     private static string Place(int place) =>
         place is >= 1 and <= 10 ? Places[place - 1] : place.ToString();
+}
 
-    private static string PointsWord(int total)
-    {
-        var abs = Math.Abs(total) % 100;
-        var last = abs % 10;
-        if (abs is >= 11 and <= 14)
-        {
-            return "очков";
-        }
-
-        return last switch
-        {
-            1 => "очко",
-            2 or 3 or 4 => "очка",
-            _ => "очков"
-        };
-    }
+public enum SpeechPlayback
+{
+    Idle,
+    Playing,
+    Paused
 }

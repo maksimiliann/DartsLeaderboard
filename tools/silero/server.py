@@ -70,7 +70,7 @@ def speak(request: SpeakRequest) -> Response:
 
     with _lock:
         audio = _model.apply_tts(
-            text=request.text,
+            ssml_text=request.text,
             speaker=request.speaker,
             sample_rate=SAMPLE_RATE,
         )

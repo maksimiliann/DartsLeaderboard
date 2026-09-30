@@ -47,4 +47,17 @@ public class MatchStandingsSpeechTests : BunitContext, IAsyncLifetime
 
         Assert.NotNull(panel.Find("[data-testid=speak-results]").GetAttribute("disabled"));
     }
+
+    [Theory]
+    [InlineData("Пауза")]
+    [InlineData("Продолжить")]
+    public void SpeakButton_ShowsPlaybackLabel(string label)
+    {
+        var panel = Render<MatchStandings>(parameters => parameters
+            .Add(p => p.Standings, [new StandingDto(1, "Иван", 120)])
+            .Add(p => p.ShowSpeakButton, true)
+            .Add(p => p.SpeakLabel, label));
+
+        Assert.Contains(label, panel.Find("[data-testid=speak-results]").TextContent, StringComparison.Ordinal);
+    }
 }

@@ -6,11 +6,11 @@
         {
             <MudButton Variant="Variant.Outlined"
                        Size="Size.Small"
-                       StartIcon="@Icons.Material.Filled.VolumeUp"
+                       StartIcon="@SpeakIcon"
                        Disabled="Speaking"
                        OnClick="OnSpeak"
                        data-testid="speak-results">
-                Озвучить результат
+                @SpeakLabel
             </MudButton>
         }
     </MudStack>
@@ -32,6 +32,10 @@
     [Parameter] public bool ShowSpeakButton { get; set; }
 
     [Parameter] public bool Speaking { get; set; }
+
+    [Parameter] public string SpeakLabel { get; set; } = "Озвучить результат";
+
+    [Parameter] public string SpeakIcon { get; set; } = Icons.Material.Filled.VolumeUp;
 
     [Parameter] public EventCallback OnSpeak { get; set; }
 }
