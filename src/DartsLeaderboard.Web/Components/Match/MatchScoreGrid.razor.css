@@ -1,3 +1,8 @@
+.score-grid-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 .score-grid-emphasis td {
     padding-top: 0.75rem !important;
     padding-bottom: 0.75rem !important;

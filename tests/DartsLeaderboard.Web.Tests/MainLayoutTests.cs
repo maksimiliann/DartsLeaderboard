@@ -24,6 +24,7 @@ public class MainLayoutTests : BunitContext, IAsyncLifetime
 
         var toggle = layout.Find("[data-testid=theme-toggle]");
         Assert.Equal("Включить тёмную тему", toggle.GetAttribute("aria-label"));
+        Assert.Equal("Открыть меню", layout.Find("[aria-label='Открыть меню']").GetAttribute("aria-label"));
     }
 
     [Fact]

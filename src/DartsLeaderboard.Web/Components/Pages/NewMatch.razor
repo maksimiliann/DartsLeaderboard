@@ -23,22 +23,22 @@
 
             @if (_mode == GameModeOption.X01)
             {
-                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-4">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-4">
                     <MudSelect T="int" Label="Начальный счёт" Value="_startingScore"
-                               ValueChanged="@(value => _startingScore = value)" Style="max-width: 180px">
+                               ValueChanged="@(value => _startingScore = value)" Class="flex-grow-1" Style="min-width: 10rem; max-width: 100%">
                         <MudSelectItem T="int" Value="101">101</MudSelectItem>
                         <MudSelectItem T="int" Value="301">301</MudSelectItem>
                         <MudSelectItem T="int" Value="501">501</MudSelectItem>
                         <MudSelectItem T="int" Value="701">701</MudSelectItem>
                     </MudSelect>
                     <MudNumericField T="int" @bind-Value="_startingScore" Label="Свой счёт"
-                                     Min="1" Max="2000" Style="max-width: 160px" />
+                                     Min="1" Max="2000" Class="flex-grow-1" Style="min-width: 8rem; max-width: 100%" />
                 </MudStack>
             }
             else
             {
                 <MudNumericField T="int" @bind-Value="_roundLimit" Label="Количество раундов"
-                                 Min="1" Max="50" Class="mt-4" Style="max-width: 200px" />
+                                 Min="1" Max="50" Class="mt-4" Style="width: 100%; max-width: 16rem" />
             }
         </MudPaper>
     </MudItem>
@@ -59,9 +59,9 @@
                             @if (_selected.Contains(player.Id))
                             {
                                 <MudText Typo="Typo.caption">@(_selected.IndexOf(player.Id) + 1)</MudText>
-                                <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small"
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" aria-label="Выше"
                                                OnClick="@(() => Move(player.Id, -1))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small"
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" aria-label="Ниже"
                                                OnClick="@(() => Move(player.Id, 1))" />
                             }
                         </MudStack>

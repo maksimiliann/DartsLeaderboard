@@ -8,3 +8,9 @@
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
+
+@media (max-width: 599.98px) {
+    .week-highlights-value {
+        white-space: normal;
+    }
+}

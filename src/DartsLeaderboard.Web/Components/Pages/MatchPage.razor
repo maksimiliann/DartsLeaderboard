@@ -21,7 +21,9 @@
 }
 else
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+<div class="match-page">
+    <div class="match-status">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
         <MudText Typo="Typo.h5">@_state.ModeTitle</MudText>
         <MudChip T="string" Size="Size.Small">Матч #@_state.MatchId</MudChip>
         <MudChip T="string" Size="Size.Small">Раунд @_state.CurrentRoundNumber</MudChip>
@@ -49,9 +51,9 @@ else
             </MudButton>
         }
     </MudStack>
+    </div>
 
-    <MudGrid>
-        <MudItem xs="12" md="7">
+    <div class="match-score">
             <MudPaper Class="pa-2">
                 <MatchScoreGrid State="_state" />
             </MudPaper>
@@ -77,14 +79,14 @@ else
             {
                 <ThrowTrendChart Series="_state.ChartSeries" />
             }
-        </MudItem>
-        <MudItem xs="12" md="5">
+    </div>
+    <div class="match-board">
             <MudPaper Class="pa-3">
                 <DartboardInput Disabled="@(!_state.IsInProgress)" PlayerName="@_state.CurrentPlayerName"
                                 Remaining="_state.CurrentRemaining" OnSubmit="Record" OnUndoThrow="Undo" />
             </MudPaper>
-        </MudItem>
-    </MudGrid>
+    </div>
+</div>
 }
 
 @code {

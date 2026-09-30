@@ -6,7 +6,7 @@
 
 <PageTitle>Архив побед</PageTitle>
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-4">
     <MudText Typo="Typo.h5">Архив побед</MudText>
     <MudSpacer />
     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="_loading">
@@ -20,7 +20,7 @@
 </MudText>
 
 <MudPaper Class="pa-2">
-    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
+    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading" Breakpoint="Breakpoint.Sm">
         <HeaderContent>
             <MudTh>Игрок</MudTh>
             <MudTh>x01</MudTh>

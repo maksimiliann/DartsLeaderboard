@@ -21,7 +21,23 @@ a, .btn-link {
 }
 
 h1:focus {
-    outline: none;
+    outline: 2px solid #258cfb;
+    outline-offset: 2px;
+}
+
+@media (max-width: 599.98px) {
+    .app-main {
+        padding: 1rem 0.75rem 1.5rem !important;
+    }
+
+    .mud-button-root {
+        min-height: 2.75rem;
+    }
+
+    .mud-icon-button {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
 }
 
 .valid.modified:not([type=checkbox]) {

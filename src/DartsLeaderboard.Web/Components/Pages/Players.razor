@@ -11,9 +11,9 @@
 <MudText Typo="Typo.h5" Class="mb-4">Игроки</MudText>
 
 <MudPaper Class="pa-4 mb-4">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
         <MudTextField @bind-Value="_newName" Label="Имя игрока" Immediate="true"
-                      OnKeyDown="@OnNewNameKeyDown" MaxLength="50" Style="max-width: 280px" />
+                      OnKeyDown="@OnNewNameKeyDown" MaxLength="50" Class="flex-grow-1" Style="min-width: 12rem; max-width: 100%" />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Добавить</MudButton>
         <MudSpacer />
         <MudSwitch T="bool" Value="_showArchived" ValueChanged="ToggleArchived" Color="Color.Primary">
@@ -23,7 +23,7 @@
 </MudPaper>
 
 <MudPaper Class="pa-2">
-    <MudTable Items="_players" Dense="true" Hover="true" Loading="_loading">
+    <MudTable Items="_players" Dense="true" Hover="true" Loading="_loading" Breakpoint="Breakpoint.Sm">
         <HeaderContent>
             <MudTh>Имя</MudTh>
             <MudTh>Статус</MudTh>
@@ -36,7 +36,7 @@
             </MudTd>
             <MudTd DataLabel="Статус">@(context.IsArchived ? "В архиве" : "Активен")</MudTd>
             <MudTd>
-                <MudButton Size="Size.Small" Variant="Variant.Text"
+                <MudButton Variant="Variant.Text"
                            OnClick="@(() => Archive(context.Id, !context.IsArchived))">
                     @(context.IsArchived ? "Вернуть" : "В архив")
                 </MudButton>

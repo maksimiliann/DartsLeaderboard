@@ -8,7 +8,7 @@
 <MudText Typo="Typo.h5" Class="mb-4">История матчей</MudText>
 
 <MudPaper Class="pa-2">
-    <MudTable Items="_matches" Dense="true" Hover="true" Loading="_loading"
+    <MudTable Items="_matches" Dense="true" Hover="true" Loading="_loading" Breakpoint="Breakpoint.Sm"
               OnRowClick="@((TableRowClickEventArgs<MatchListItemDto> args) =>
                   Navigation.NavigateTo($"/match/{args.Item!.MatchId}"))">
         <HeaderContent>
@@ -19,7 +19,9 @@
             <MudTh>Завершён</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Матч">#@context.MatchId</MudTd>
+            <MudTd DataLabel="Матч">
+                <MudLink Href="@($"/match/{context.MatchId}")">#@context.MatchId</MudLink>
+            </MudTd>
             <MudTd DataLabel="Режим">@context.ModeTitle</MudTd>
             <MudTd DataLabel="Игроки">@context.Participants</MudTd>
             <MudTd DataLabel="Победитель">@(context.WinnerName ?? "Ничья")</MudTd>

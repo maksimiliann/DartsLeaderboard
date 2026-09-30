@@ -1,0 +1,34 @@
+.match-page {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: 1.5rem;
+    row-gap: 1rem;
+    align-items: start;
+}
+
+.match-status {
+    grid-column: 1 / -1;
+}
+
+.match-score,
+.match-board {
+    min-width: 0;
+}
+
+@media (max-width: 959.98px) {
+    .match-page {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .match-status,
+    .match-score,
+    .match-board {
+        width: 100%;
+    }
+
+    .match-board {
+        order: -1;
+    }
+}

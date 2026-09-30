@@ -21,6 +21,11 @@
     <script src="js/speech.js"></script>
     <script src="@Assets["_framework/blazor.web.js"]" autostart="false"></script>
     <script>
+        window.dartsLayout = {
+            isWide: function () {
+                return window.matchMedia("(min-width: 960px)").matches;
+            }
+        };
         window.dartsTheme = {
             get: function () {
                 var match = document.cookie.match(/(?:^|; )darts-theme=(dark|light)/);

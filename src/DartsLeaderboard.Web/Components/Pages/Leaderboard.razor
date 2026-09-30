@@ -9,7 +9,7 @@
 
 <PageTitle>Лидерборд</PageTitle>
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-4">
     <MudText Typo="Typo.h5">Лидерборд</MudText>
     <MudSpacer />
     <MudButton Variant="Variant.Outlined" Color="Color.Primary"
@@ -27,7 +27,7 @@
 <ClubRecordsPanel Records="_records" />
 
 <MudPaper Class="pa-2 mb-6">
-    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading">
+    <MudTable Items="_rows" Dense="true" Hover="true" Loading="_loading" Breakpoint="Breakpoint.Sm">
         <HeaderContent>
             <MudTh>Игрок</MudTh>
             <MudTh>x01</MudTh>
@@ -52,7 +52,7 @@
 {
     <MudText Typo="Typo.h6" Class="mb-2">Незавершённые матчи</MudText>
     <MudPaper Class="pa-2">
-        <MudTable Items="_unfinished" Dense="true" Hover="true">
+        <MudTable Items="_unfinished" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
             <HeaderContent>
                 <MudTh>Матч</MudTh>
                 <MudTh>Режим</MudTh>
@@ -66,7 +66,7 @@
                 <MudTd DataLabel="Игроки">@context.Participants</MudTd>
                 <MudTd DataLabel="Начат">@context.StartedAt.LocalDateTime.ToString("dd.MM HH:mm")</MudTd>
                 <MudTd>
-                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                    <MudButton Variant="Variant.Text" Color="Color.Primary"
                                OnClick="@(() => Navigation.NavigateTo($"/match/{context.MatchId}"))">
                         Продолжить
                     </MudButton>
