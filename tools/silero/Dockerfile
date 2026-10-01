@@ -20,4 +20,4 @@ USER silero
 
 ENV SILERO_MODEL_PATH=/app/v5_5_ru.pt
 EXPOSE 8765
-CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8765"]
+CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8765", "--no-access-log"]
