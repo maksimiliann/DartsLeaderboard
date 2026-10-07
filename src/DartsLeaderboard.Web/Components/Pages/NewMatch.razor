@@ -48,9 +48,9 @@
             <MudText Typo="Typo.subtitle1" Class="mb-2">Участники и порядок</MudText>
 
             <MudList T="PlayerDto" Dense="true">
-                @foreach (var player in _players)
+                @foreach (var player in PlayersInTurnOrder)
                 {
-                    <MudListItem T="PlayerDto">
+                    <MudListItem T="PlayerDto" @key="player.Id">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudCheckBox T="bool" Value="_selected.Contains(player.Id)"
                                          ValueChanged="@(value => Toggle(player.Id, value))"
@@ -98,6 +98,17 @@
         var lastIds = await MatchList.GetLastPlayerIdsAsync();
         _selected.AddRange(lastIds.Where(available.Contains));
     }
+
+    private IEnumerable<PlayerDto> PlayersInTurnOrder =>
+        _players
+            .Select((player, index) => (player, index))
+            .OrderBy(item =>
+            {
+                var seat = _selected.IndexOf(item.player.Id);
+                return seat >= 0 ? seat : int.MaxValue;
+            })
+            .ThenBy(item => item.index)
+            .Select(item => item.player);
 
     private void OnModeChanged(GameModeOption mode) => _mode = mode;
 

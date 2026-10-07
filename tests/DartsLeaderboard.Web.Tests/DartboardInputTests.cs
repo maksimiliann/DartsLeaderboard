@@ -30,7 +30,24 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
         Assert.Contains("Дротик 2", component.Markup);
         Assert.Contains("Дротик 3", component.Markup);
         Assert.DoesNotContain("Дротик 4", component.Markup);
+        Assert.DoesNotContain("Очки", component.Markup);
         Assert.Empty(component.FindAll("[data-testid=visit-remaining]"));
+        var dartRow = component.Find(".dartboard-darts");
+        Assert.Contains("Дротик 1", dartRow.TextContent);
+        Assert.Contains("Дротик 3", dartRow.TextContent);
+        Assert.DoesNotContain("Сумма", dartRow.TextContent);
+    }
+
+    [Fact]
+    public void Header_ShowsPlayerNameWithoutPointsLabel()
+    {
+        var component = Render<DartboardInput>(parameters => parameters
+            .Add(p => p.PlayerName, "вася")
+            .Add(p => p.Remaining, 101));
+
+        Assert.Contains("вася", component.Markup);
+        Assert.DoesNotContain("Очки", component.Markup);
+        Assert.DoesNotContain("вася", component.Find(".dartboard-darts").TextContent);
     }
 
     [Fact]

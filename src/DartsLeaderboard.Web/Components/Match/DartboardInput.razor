@@ -1,24 +1,29 @@
 <div class="dartboard-input">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
-        <MudText Typo="Typo.subtitle1">
-            @(PlayerName is null ? "Очки" : $"Очки: {PlayerName}")
-        </MudText>
-        <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
-        @if (Remaining is int remaining)
-        {
-            <MudChip T="string" Size="Size.Small" Color="Color.Info" data-testid="visit-remaining">
-                Остаток @(remaining - _visit.Sum)
-            </MudChip>
-        }
-        @for (var index = 0; index < 3; index++)
-        {
-            var slot = index;
-            var dart = slot < _visit.Darts.Count ? _visit.Darts[slot] : (DartboardDart?)null;
-            <MudChip T="string" Size="Size.Small" Color="@(dart is null ? Color.Default : Color.Primary)"
-                     Variant="@(dart is null ? Variant.Outlined : Variant.Filled)">
-                @(dart is null ? $"Дротик {slot + 1}" : $"{dart.Value.Label} · {dart.Value.Points}")
-            </MudChip>
-        }
+    <MudStack Spacing="1" Class="mb-2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
+            @if (!string.IsNullOrWhiteSpace(PlayerName))
+            {
+                <MudText Typo="Typo.subtitle1">@PlayerName</MudText>
+            }
+            <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
+            @if (Remaining is int remaining)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" data-testid="visit-remaining">
+                    Остаток @(remaining - _visit.Sum)
+                </MudChip>
+            }
+        </MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1" Class="dartboard-darts">
+            @for (var index = 0; index < 3; index++)
+            {
+                var slot = index;
+                var dart = slot < _visit.Darts.Count ? _visit.Darts[slot] : (DartboardDart?)null;
+                <MudChip T="string" Size="Size.Small" Color="@(dart is null ? Color.Default : Color.Primary)"
+                         Variant="@(dart is null ? Variant.Outlined : Variant.Filled)">
+                    @(dart is null ? $"Дротик {slot + 1}" : $"{dart.Value.Label} · {dart.Value.Points}")
+                </MudChip>
+            }
+        </MudStack>
     </MudStack>
 
     <MudStack Spacing="3">

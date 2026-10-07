@@ -107,7 +107,7 @@ public sealed class X01Rules : IGameRules
             return "50";
         }
 
-        return remaining > 0 && remaining < 40 && remaining % 2 == 0
+        return remaining > 0 && remaining <= 40 && remaining % 2 == 0
             ? (remaining / 2).ToString(Ru)
             : null;
     }

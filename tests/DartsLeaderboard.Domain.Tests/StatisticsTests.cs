@@ -40,6 +40,7 @@ public class StatisticsTests
 
     [Theory]
     [InlineData(50, "50")]
+    [InlineData(40, "20")]
     [InlineData(38, "19")]
     [InlineData(32, "16")]
     [InlineData(30, "15")]
@@ -53,7 +54,7 @@ public class StatisticsTests
     }
 
     [Theory]
-    [InlineData(40)]
+    [InlineData(42)]
     [InlineData(41)]
     [InlineData(301)]
     [InlineData(1)]
