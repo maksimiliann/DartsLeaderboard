@@ -81,6 +81,9 @@ else
             }
     </div>
     <div class="match-board">
+            <div class="match-round">
+                <CurrentRoundStrip State="_state" />
+            </div>
             <MudPaper Class="pa-3">
                 <DartboardInput Disabled="@(!_state.IsInProgress)" PlayerName="@_state.CurrentPlayerName"
                                 Remaining="_state.CurrentRemaining" OnSubmit="Record" OnUndoThrow="Undo" />

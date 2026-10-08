@@ -26,7 +26,8 @@
         </MudStack>
     </MudStack>
 
-    <MudStack Spacing="3">
+    <MudStack Spacing="2" Class="dartboard-stage">
+        <div class="dartboard-frame">
         <svg class="dartboard @(Disabled ? "dartboard-disabled" : null)"
              viewBox="0 0 @((int)DartboardLayout.ViewBox) @((int)DartboardLayout.ViewBox)"
              role="img" aria-label="Мишень для ввода дротиков">
@@ -50,18 +51,28 @@
                 </path>
             }
 
+            @foreach (var target in SectorTargets)
+            {
+                var sectorTarget = target;
+                <path class="dartboard-sector-target @(_selectedSector == sectorTarget.Sector ? "is-selected" : null)"
+                      d="@sectorTarget.Path"
+                      data-sector="@sectorTarget.Sector"
+                      aria-label="@($"Сектор {sectorTarget.Sector}")"
+                      @onclick="() => SelectSector(sectorTarget.Sector)" />
+            }
+
             @foreach (var number in Numbers)
             {
                 <SvgText Class="dartboard-number" X="@number.X" Y="@number.Y">@number.Sector</SvgText>
             }
 
-            <circle class="@SliceClass("25", 1, DartboardRing.Double)"
+            <circle class="@($"{SliceClass("25", 1, DartboardRing.Double)} dartboard-bull")"
                     cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R25)"
                     data-dart="25"
                     @onclick="@(() => Hit(DartboardScoring.OuterBull, "25"))">
                 <title>25</title>
             </circle>
-            <circle class="@SliceClass("50", 0, DartboardRing.Double)"
+            <circle class="@($"{SliceClass("50", 0, DartboardRing.Double)} dartboard-bull")"
                     cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R50)"
                     data-dart="50"
                     @onclick="@(() => Hit(DartboardScoring.InnerBull, "50"))">
@@ -78,6 +89,23 @@
                 <SvgText Class="dartboard-hit-label" X="@marker.X" Y="@marker.Y" Fill="#ffffff">@marker.Number</SvgText>
             }
         </svg>
+        </div>
+
+        @if (_selectedSector is int selectedSector)
+        {
+            <div class="dartboard-ring-choice">
+                <MudText Typo="Typo.body2">Номер @selectedSector</MudText>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Variant="Variant.Outlined" data-testid="ring-single"
+                               OnClick="@(() => ChooseRing(DartboardRing.Single))">Одинарное</MudButton>
+                    <MudButton Variant="Variant.Outlined" data-testid="ring-double"
+                               OnClick="@(() => ChooseRing(DartboardRing.Double))">Удвоение</MudButton>
+                    <MudButton Variant="Variant.Outlined" data-testid="ring-triple"
+                               OnClick="@(() => ChooseRing(DartboardRing.Triple))">Утроение</MudButton>
+                    <MudButton Variant="Variant.Text" data-testid="ring-miss" OnClick="ChooseMiss">Мимо</MudButton>
+                </MudStack>
+            </div>
+        }
 
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="dartboard-actions">
             <MudButton Variant="Variant.Text" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart">
@@ -109,6 +137,7 @@
     private readonly List<string> _hitIds = [];
     private string? _lastHitId;
     private string? _trackedPlayer;
+    private int? _selectedSector;
 
     [Parameter] public bool Disabled { get; set; }
 
@@ -165,6 +194,25 @@
         }
     }
 
+    private IEnumerable<SectorTarget> SectorTargets
+    {
+        get
+        {
+            for (var index = 0; index < DartboardScoring.SectorOrder.Length; index++)
+            {
+                var sector = DartboardScoring.SectorOrder[index];
+                var center = -90 + index * 18;
+                yield return new SectorTarget(
+                    sector,
+                    DartboardLayout.RingSlice(
+                        DartboardLayout.R25,
+                        DartboardLayout.RMiss,
+                        center - 9,
+                        center + 9));
+            }
+        }
+    }
+
     private IEnumerable<NumberLabel> Numbers
     {
         get
@@ -207,6 +255,43 @@
         _visit = new DartboardVisit();
         _hitIds.Clear();
         _lastHitId = null;
+        _selectedSector = null;
+    }
+
+    private void SelectSector(int sector)
+    {
+        if (Disabled || _visit.IsFull)
+        {
+            return;
+        }
+
+        _selectedSector = sector;
+    }
+
+    private Task ChooseRing(DartboardRing ring)
+    {
+        if (_selectedSector is not int sector)
+        {
+            return Task.CompletedTask;
+        }
+
+        var prefix = ring switch
+        {
+            DartboardRing.Double => "x2",
+            DartboardRing.Triple => "x3",
+            _ => "x1o"
+        };
+        return Hit(DartboardScoring.Sector(ring, sector), $"{prefix}-{sector}");
+    }
+
+    private Task ChooseMiss()
+    {
+        if (_selectedSector is not int sector)
+        {
+            return Task.CompletedTask;
+        }
+
+        return Hit(DartboardScoring.Miss, $"miss-{sector}");
     }
 
     private string SliceClass(string id, int sectorIndex, DartboardRing ring)
@@ -228,7 +313,13 @@
 
     private async Task Hit(DartboardDart dart, string id)
     {
-        if (Disabled || !_visit.TryAdd(dart))
+        if (Disabled)
+        {
+            return;
+        }
+
+        _selectedSector = null;
+        if (!_visit.TryAdd(dart))
         {
             return;
         }
@@ -259,6 +350,7 @@
 
     private void UndoDart()
     {
+        _selectedSector = null;
         if (_visit.TryUndo())
         {
             if (_hitIds.Count > 0)
@@ -309,6 +401,8 @@
     private readonly record struct Slice(string Id, int SectorIndex, DartboardRing Ring, string Path, DartboardDart Dart);
 
     private readonly record struct MissSlice(string Id, int SectorIndex, string Path);
+
+    private readonly record struct SectorTarget(int Sector, string Path);
 
     private readonly record struct NumberLabel(int Sector, string X, string Y);
 }

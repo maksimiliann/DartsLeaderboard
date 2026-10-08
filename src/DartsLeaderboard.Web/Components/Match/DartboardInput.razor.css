@@ -77,3 +77,50 @@
     pointer-events: none;
     user-select: none;
 }
+
+.dartboard-sector-target {
+    fill: transparent;
+    stroke: transparent;
+    pointer-events: none;
+}
+
+.dartboard-sector-target.is-selected {
+    fill: color-mix(in srgb, var(--mud-palette-primary) 35%, transparent);
+    stroke: var(--mud-palette-primary);
+    stroke-width: 3;
+}
+
+.dartboard-ring-choice {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dartboard-ring-choice ::deep .mud-button-root {
+    flex: 1 1 40%;
+    min-height: 48px;
+}
+
+@media (max-width: 959.98px) {
+    .dartboard-slice {
+        pointer-events: none;
+    }
+
+    .dartboard-bull {
+        pointer-events: auto;
+    }
+
+    .dartboard-sector-target {
+        pointer-events: auto;
+        cursor: pointer;
+    }
+
+    ::deep .dartboard-number {
+        font-size: 22px;
+    }
+
+    .dartboard {
+        width: min(100%, calc(100svh - 22rem));
+        height: auto;
+    }
+}

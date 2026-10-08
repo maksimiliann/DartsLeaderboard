@@ -51,6 +51,23 @@ public class DartboardInputTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
+    public void SectorThenDouble_ScoresChosenDoubleWithoutCountingTheSectorTap()
+    {
+        var component = Render<DartboardInput>(parameters => parameters
+            .Add(p => p.Remaining, 101));
+
+        component.Find("[data-sector=16]").Click();
+
+        Assert.Equal("Остаток 101", component.Find("[data-testid=visit-remaining]").TextContent.Trim());
+        Assert.Empty(component.FindAll("[data-hit]"));
+
+        component.Find("[data-testid=ring-double]").Click();
+
+        Assert.Equal("Остаток 69", component.Find("[data-testid=visit-remaining]").TextContent.Trim());
+        Assert.Single(component.FindAll("[data-hit]"));
+    }
+
+    [Fact]
     public void RemainingChip_UpdatesAfterEachDart()
     {
         var component = Render<DartboardInput>(parameters => parameters

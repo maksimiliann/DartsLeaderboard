@@ -1,0 +1,46 @@
+@namespace DartsLeaderboard.Web.Components.Match
+<div class="round-line" data-testid="current-round" aria-label="@($"Раунд {State.CurrentRoundNumber}")">
+    <span class="round-badge" data-testid="round-number">@State.CurrentRoundNumber</span>
+    @for (var index = 0; index < State.Columns.Count; index++)
+    {
+        var column = State.Columns[index];
+        var isCurrent = State.IsInProgress && column.ParticipantId == State.CurrentParticipantId;
+        var score = ScoreAt(index, isCurrent);
+        <span class="round-cell @(isCurrent ? "is-current" : null)" data-testid="round-player">
+            <span class="round-name">@column.PlayerName</span>
+            <span class="round-score @score.ClassName">@score.Text</span>
+        </span>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MatchStateDto State { get; set; } = default!;
+
+    private ScoreMark ScoreAt(int index, bool isCurrent)
+    {
+        if (PointsAt(State.CurrentRoundNumber, index) is int points)
+        {
+            return new ScoreMark(points.ToString(), null);
+        }
+
+        if (isCurrent)
+        {
+            return new ScoreMark("ходит", "is-pending");
+        }
+
+        if (State.CurrentRoundNumber > 1 && PointsAt(State.CurrentRoundNumber - 1, index) is int previous)
+        {
+            return new ScoreMark(previous.ToString(), "is-previous");
+        }
+
+        return new ScoreMark("—", "is-pending");
+    }
+
+    private int? PointsAt(int roundNumber, int index)
+    {
+        var row = State.Rows.FirstOrDefault(row => row.RoundNumber == roundNumber);
+        return row is not null && index < row.Cells.Count ? row.Cells[index].Points : null;
+    }
+
+    private readonly record struct ScoreMark(string Text, string? ClassName);
+}

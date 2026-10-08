@@ -15,6 +15,10 @@
     min-width: 0;
 }
 
+.match-round {
+    display: none;
+}
+
 @media (max-width: 959.98px) {
     .match-page {
         display: flex;
@@ -30,5 +34,12 @@
 
     .match-board {
         order: -1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .match-round {
+        display: block;
     }
 }
