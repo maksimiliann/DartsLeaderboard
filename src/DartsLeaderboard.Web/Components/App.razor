@@ -35,6 +35,15 @@
                 document.cookie = 'darts-theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
             }
         };
+        window.dartsInput = {
+            get: function () {
+                var match = document.cookie.match(/(?:^|; )darts-input=(sector|board)/);
+                return match ? match[1] : null;
+            },
+            set: function (value) {
+                document.cookie = 'darts-input=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+            }
+        };
         Blazor.start();
     </script>
 </body>

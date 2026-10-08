@@ -42,6 +42,23 @@ public class MainLayoutTests : BunitContext, IAsyncLifetime
         Assert.Equal("Включить тёмную тему", toggle.GetAttribute("aria-label"));
     }
 
+    [Fact]
+    public void InputMode_StartsAsSectorsAndTogglesToPrecise()
+    {
+        var layout = RenderLayout();
+
+        var toggle = layout.Find("[data-testid=input-mode-toggle]");
+        Assert.Equal("Включить точный ввод", toggle.GetAttribute("aria-label"));
+
+        toggle.Click();
+
+        Assert.Equal("Включить ввод по секторам", toggle.GetAttribute("aria-label"));
+
+        toggle.Click();
+
+        Assert.Equal("Включить точный ввод", toggle.GetAttribute("aria-label"));
+    }
+
     private IRenderedComponent<MainLayout> RenderLayout() =>
         Render<MainLayout>(parameters => parameters
             .Add(layout => layout.Body, builder => builder.AddMarkupContent(0, "<div>ok</div>")));

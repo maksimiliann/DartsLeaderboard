@@ -1,0 +1,9 @@
+.input-mode-toggle {
+    margin-inline-end: 20px;
+}
+
+@media (min-width: 960px) {
+    .input-mode-toggle {
+        display: none;
+    }
+}

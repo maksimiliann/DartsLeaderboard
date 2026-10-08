@@ -101,16 +101,23 @@
     min-height: 48px;
 }
 
+.dartboard-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 @media (max-width: 959.98px) {
-    .dartboard-slice {
+    .sector-input .dartboard-slice {
         pointer-events: none;
     }
 
-    .dartboard-bull {
+    .sector-input .dartboard-bull {
         pointer-events: auto;
     }
 
-    .dartboard-sector-target {
+    .sector-input .dartboard-sector-target {
         pointer-events: auto;
         cursor: pointer;
     }
@@ -119,8 +126,13 @@
         font-size: 22px;
     }
 
-    .dartboard {
-        width: min(100%, calc(100svh - 22rem));
-        height: auto;
+    .dartboard-actions {
+        flex-wrap: nowrap;
+    }
+
+    .dartboard-actions ::deep .mud-button-root {
+        font-size: 0.8125rem;
+        padding-left: 10px;
+        padding-right: 10px;
     }
 }

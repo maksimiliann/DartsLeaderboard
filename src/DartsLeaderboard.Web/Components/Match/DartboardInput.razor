@@ -1,29 +1,16 @@
-<div class="dartboard-input">
-    <MudStack Spacing="1" Class="mb-2">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
-            @if (!string.IsNullOrWhiteSpace(PlayerName))
-            {
-                <MudText Typo="Typo.subtitle1">@PlayerName</MudText>
-            }
-            <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
-            @if (Remaining is int remaining)
-            {
-                <MudChip T="string" Size="Size.Small" Color="Color.Info" data-testid="visit-remaining">
-                    Остаток @(remaining - _visit.Sum)
-                </MudChip>
-            }
-        </MudStack>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1" Class="dartboard-darts">
-            @for (var index = 0; index < 3; index++)
-            {
-                var slot = index;
-                var dart = slot < _visit.Darts.Count ? _visit.Darts[slot] : (DartboardDart?)null;
-                <MudChip T="string" Size="Size.Small" Color="@(dart is null ? Color.Default : Color.Primary)"
-                         Variant="@(dart is null ? Variant.Outlined : Variant.Filled)">
-                    @(dart is null ? $"Дротик {slot + 1}" : $"{dart.Value.Label} · {dart.Value.Points}")
-                </MudChip>
-            }
-        </MudStack>
+<div class="dartboard-input @(SectorInput ? "sector-input" : null)">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
+        @if (!string.IsNullOrWhiteSpace(PlayerName))
+        {
+            <MudText Typo="Typo.subtitle1">@PlayerName</MudText>
+        }
+        <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
+        @if (Remaining is int remaining)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Info" data-testid="visit-remaining">
+                Остаток @(remaining - _visit.Sum)
+            </MudChip>
+        }
     </MudStack>
 
     <MudStack Spacing="2" Class="dartboard-stage">
@@ -107,20 +94,14 @@
             </div>
         }
 
-        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="dartboard-actions">
+        <div class="dartboard-actions">
             <MudButton Variant="Variant.Text" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart">
                 Отменить дротик
             </MudButton>
-            <MudSpacer />
             <MudButton Variant="Variant.Outlined" OnClick="OnUndoThrow">
                 Отменить бросок
             </MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       Disabled="@(Disabled || _visit.Darts.Count == 0)"
-                       data-testid="submit-visit" OnClick="SubmitVisit">
-                Записать бросок
-            </MudButton>
-        </MudStack>
+        </div>
     </MudStack>
 </div>
 
@@ -244,8 +225,15 @@
         }
     }
 
+    [CascadingParameter(Name = "SectorInput")] public bool SectorInput { get; set; } = true;
+
     protected override void OnParametersSet()
     {
+        if (!SectorInput)
+        {
+            _selectedSector = null;
+        }
+
         if (_trackedPlayer == PlayerName)
         {
             return;
@@ -260,7 +248,7 @@
 
     private void SelectSector(int sector)
     {
-        if (Disabled || _visit.IsFull)
+        if (!SectorInput || Disabled || _visit.IsFull)
         {
             return;
         }
@@ -344,7 +332,7 @@
 
         if (_visit.IsFull)
         {
-            await SubmitVisit();
+            await FinishVisit();
         }
     }
 
@@ -360,16 +348,6 @@
 
             _lastHitId = _hitIds.LastOrDefault();
         }
-    }
-
-    private Task SubmitVisit()
-    {
-        if (_visit.Darts.Count == 0)
-        {
-            return Task.CompletedTask;
-        }
-
-        return FinishVisit();
     }
 
     private Task FinishBust()

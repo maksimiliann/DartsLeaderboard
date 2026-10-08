@@ -15,6 +15,15 @@
                        OnClick="@(() => _drawerOpen = !_drawerOpen)" />
         <MudText Typo="Typo.h6" Class="ml-2">Дартс</MudText>
         <MudSpacer />
+        <span class="input-mode-toggle">
+            <MudTooltip Text="@(_sectorInput ? "Точный ввод" : "Ввод по секторам")">
+                <MudIconButton Icon="@(_sectorInput ? Icons.Material.Filled.Adjust : Icons.Material.Filled.DonutLarge)"
+                               Color="Color.Inherit"
+                               aria-label="@(_sectorInput ? "Включить точный ввод" : "Включить ввод по секторам")"
+                               data-testid="input-mode-toggle"
+                               OnClick="ToggleInput" />
+            </MudTooltip>
+        </span>
         <MudTooltip Text="@(_isDarkMode ? "Светлая тема" : "Тёмная тема")">
             <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                            Color="Color.Inherit"
@@ -29,7 +38,9 @@
     </MudDrawer>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6 app-main">
-            @Body
+            <CascadingValue Name="SectorInput" Value="_sectorInput">
+                @Body
+            </CascadingValue>
         </MudContainer>
     </MudMainContent>
 </MudLayout>
@@ -37,6 +48,7 @@
 @code {
     private bool _drawerOpen;
     private bool _isDarkMode;
+    private bool _sectorInput = true;
 
     protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
 
@@ -48,8 +60,10 @@
         }
 
         var stored = await JS.InvokeAsync<string?>("dartsTheme.get");
+        var input = await JS.InvokeAsync<string?>("dartsInput.get");
         var wide = await JS.InvokeAsync<bool>("dartsLayout.isWide");
         var dark = stored == "dark";
+        var sector = input != "board";
         var changed = false;
         if (wide && !_drawerOpen)
         {
@@ -60,6 +74,12 @@
         if (dark != _isDarkMode)
         {
             _isDarkMode = dark;
+            changed = true;
+        }
+
+        if (sector != _sectorInput)
+        {
+            _sectorInput = sector;
             changed = true;
         }
 
@@ -90,5 +110,11 @@
     {
         _isDarkMode = !_isDarkMode;
         await JS.InvokeVoidAsync("dartsTheme.set", _isDarkMode ? "dark" : "light");
+    }
+
+    private async Task ToggleInput()
+    {
+        _sectorInput = !_sectorInput;
+        await JS.InvokeVoidAsync("dartsInput.set", _sectorInput ? "sector" : "board");
     }
 }
