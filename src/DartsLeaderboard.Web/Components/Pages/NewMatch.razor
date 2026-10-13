@@ -40,6 +40,11 @@
                 <MudNumericField T="int" @bind-Value="_roundLimit" Label="Количество раундов"
                                  Min="1" Max="50" Class="mt-4" Style="width: 100%; max-width: 16rem" />
             }
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                       Disabled="_selected.Count < 2" OnClick="Start">
+                Начать
+            </MudButton>
         </MudPaper>
     </MudItem>
 
@@ -78,11 +83,6 @@
         </MudPaper>
     </MudItem>
 </MudGrid>
-
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
-           Disabled="_selected.Count < 2" OnClick="Start">
-    Начать
-</MudButton>
 
 @code {
     private IReadOnlyList<PlayerDto> _players = Array.Empty<PlayerDto>();

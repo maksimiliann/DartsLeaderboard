@@ -1,14 +1,17 @@
-<div class="dartboard-input @(SectorInput ? "sector-input" : null)">
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div @ref="_root" class="dartboard-input @(SectorInput ? "sector-input" : null)">
     <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
         @if (!string.IsNullOrWhiteSpace(PlayerName))
         {
             <MudText Typo="Typo.subtitle1">@PlayerName</MudText>
         }
-        <MudChip T="string" Size="Size.Small">Сумма @_visit.Sum</MudChip>
+        <MudChip T="string" Size="Size.Small"><span data-testid="visit-sum">Сумма @_visit.Sum</span></MudChip>
         @if (Remaining is int remaining)
         {
-            <MudChip T="string" Size="Size.Small" Color="Color.Info" data-testid="visit-remaining">
-                Остаток @(remaining - _visit.Sum)
+            <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                <span data-testid="visit-remaining">Остаток @(remaining - _visit.Sum)</span>
             </MudChip>
         }
     </MudStack>
@@ -23,6 +26,10 @@
                 <path class="@MissSliceClass(slice.Id, slice.SectorIndex)"
                       d="@slice.Path"
                       data-dart="@slice.Id"
+                      data-points="0"
+                      data-double="false"
+                      data-marker-angle="@F(slice.MarkerAngle)"
+                      data-marker-radius="@F(slice.MarkerRadius)"
                       @onclick="() => Hit(DartboardScoring.Miss, slice.Id)">
                     <title>Мимо</title>
                 </path>
@@ -33,6 +40,10 @@
                 <path class="@SliceClass(slice.Id, slice.SectorIndex, slice.Ring)"
                       d="@slice.Path"
                       data-dart="@slice.Id"
+                      data-points="@slice.Dart.Points"
+                      data-double="@(slice.Dart.IsDouble ? "true" : "false")"
+                      data-marker-angle="@F(slice.MarkerAngle)"
+                      data-marker-radius="@F(slice.MarkerRadius)"
                       @onclick="() => Hit(slice.Dart, slice.Id)">
                     <title>@slice.Dart.Label · @slice.Dart.Points</title>
                 </path>
@@ -56,12 +67,19 @@
             <circle class="@($"{SliceClass("25", 1, DartboardRing.Double)} dartboard-bull")"
                     cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R25)"
                     data-dart="25"
+                    data-points="25"
+                    data-double="false"
+                    data-marker-angle="-90"
+                    data-marker-radius="@F((DartboardLayout.R50 + DartboardLayout.R25) / 2)"
                     @onclick="@(() => Hit(DartboardScoring.OuterBull, "25"))">
                 <title>25</title>
             </circle>
             <circle class="@($"{SliceClass("50", 0, DartboardRing.Double)} dartboard-bull")"
                     cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="@F(DartboardLayout.R50)"
                     data-dart="50"
+                    data-points="50"
+                    data-double="true"
+                    data-marker-kind="bull50"
                     @onclick="@(() => Hit(DartboardScoring.InnerBull, "50"))">
                 <title>50</title>
             </circle>
@@ -75,13 +93,21 @@
                 </circle>
                 <SvgText Class="dartboard-hit-label" X="@marker.X" Y="@marker.Y" Fill="#ffffff">@marker.Number</SvgText>
             }
+
+            @for (var number = 1; number <= 3; number++)
+            {
+                <g data-hit-slot="@number" visibility="hidden" pointer-events="none">
+                    <circle class="dartboard-hit" cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="6.5" />
+                    <SvgText Class="dartboard-hit-label" X="@F(DartboardLayout.Cx)" Y="@F(DartboardLayout.Cy)" Fill="#ffffff">@number</SvgText>
+                </g>
+            }
         </svg>
         </div>
 
-        @if (_selectedSector is int selectedSector)
+        @if (SectorInput)
         {
-            <div class="dartboard-ring-choice">
-                <MudText Typo="Typo.body2">Номер @selectedSector</MudText>
+            <div class="dartboard-ring-choice @(_selectedSector is null ? null : "is-open")" data-testid="ring-choice">
+                <MudText Typo="Typo.body2"><span data-testid="selected-sector">Номер @(_selectedSector?.ToString())</span></MudText>
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                     <MudButton Variant="Variant.Outlined" data-testid="ring-single"
                                OnClick="@(() => ChooseRing(DartboardRing.Single))">Одинарное</MudButton>
@@ -95,7 +121,7 @@
         }
 
         <div class="dartboard-actions">
-            <MudButton Variant="Variant.Text" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart">
+            <MudButton Variant="Variant.Text" data-testid="undo-dart" Disabled="@(Disabled || _visit.Darts.Count == 0)" OnClick="UndoDart">
                 Отменить дротик
             </MudButton>
             <MudButton Variant="Variant.Outlined" OnClick="OnUndoThrow">
@@ -119,6 +145,8 @@
     private string? _lastHitId;
     private string? _trackedPlayer;
     private int? _selectedSector;
+    private ElementReference _root;
+    private DotNetObjectReference<DartboardInput>? _self;
 
     [Parameter] public bool Disabled { get; set; }
 
@@ -145,7 +173,9 @@
                         DartboardLayout.RDouble,
                         DartboardLayout.RMiss,
                         center - 9,
-                        center + 9));
+                        center + 9),
+                    center,
+                    (DartboardLayout.RDouble + DartboardLayout.RMiss) / 2);
             }
         }
     }
@@ -169,7 +199,9 @@
                         index,
                         ring.Ring,
                         DartboardLayout.RingSlice(ring.Inner, ring.Outer, start, end),
-                        dart);
+                        dart,
+                        center,
+                        (ring.Inner + ring.Outer) / 2);
                 }
             }
         }
@@ -244,6 +276,52 @@
         _hitIds.Clear();
         _lastHitId = null;
         _selectedSector = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_self is null)
+        {
+            _self = DotNetObjectReference.Create(this);
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "dartboardInput.attach",
+                _root,
+                _self,
+                new
+                {
+                    player = PlayerName,
+                    remaining = Remaining,
+                    sectorInput = SectorInput,
+                    disabled = Disabled
+                });
+        }
+        catch (JSException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    [JSInvokable]
+    public Task SubmitVisit(DartHitPayload[]? darts)
+    {
+        _visit = new DartboardVisit();
+        _hitIds.Clear();
+        _lastHitId = null;
+        _selectedSector = null;
+        var payload = (darts ?? []).Select(dart => new ThrowDartDto(dart.Points, dart.IsDouble)).ToList();
+        return OnSubmit.InvokeAsync(payload);
+    }
+
+    public void Dispose()
+    {
+        _self?.Dispose();
+        _self = null;
     }
 
     private void SelectSector(int sector)
@@ -376,9 +454,16 @@
 
     private readonly record struct HitMarker(int Number, string X, string Y);
 
-    private readonly record struct Slice(string Id, int SectorIndex, DartboardRing Ring, string Path, DartboardDart Dart);
+    private readonly record struct Slice(
+        string Id,
+        int SectorIndex,
+        DartboardRing Ring,
+        string Path,
+        DartboardDart Dart,
+        double MarkerAngle,
+        double MarkerRadius);
 
-    private readonly record struct MissSlice(string Id, int SectorIndex, string Path);
+    private readonly record struct MissSlice(string Id, int SectorIndex, string Path, double MarkerAngle, double MarkerRadius);
 
     private readonly record struct SectorTarget(int Sector, string Path);
 

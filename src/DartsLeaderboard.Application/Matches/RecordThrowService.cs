@@ -41,7 +41,8 @@ public sealed class RecordThrowService(IMatchRepository matches, IClock clock, I
             return OperationResult<MatchStateDto>.Fail(DomainErrorCode.RoundAlreadyRecorded);
         }
 
-        notifier.NotifyChanged(matchId);
-        return OperationResult<MatchStateDto>.Success(MatchStateMapper.ToDto(match));
+        var state = MatchStateMapper.ToDto(match);
+        notifier.NotifyChanged(matchId, state);
+        return OperationResult<MatchStateDto>.Success(state);
     }
 }

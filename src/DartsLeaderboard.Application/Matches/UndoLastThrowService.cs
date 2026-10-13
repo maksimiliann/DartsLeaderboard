@@ -24,8 +24,9 @@ public sealed class UndoLastThrowService(IMatchRepository matches, IMatchNotifie
         }
 
         await matches.SaveChangesAsync(cancellationToken);
-        notifier.NotifyChanged(matchId);
+        var state = MatchStateMapper.ToDto(match);
+        notifier.NotifyChanged(matchId, state);
 
-        return OperationResult<MatchStateDto>.Success(MatchStateMapper.ToDto(match));
+        return OperationResult<MatchStateDto>.Success(state);
     }
 }

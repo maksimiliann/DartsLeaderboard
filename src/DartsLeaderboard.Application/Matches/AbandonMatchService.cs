@@ -21,7 +21,7 @@ public sealed class AbandonMatchService(IMatchRepository matches, IClock clock, 
         }
 
         await matches.SaveChangesAsync(cancellationToken);
-        notifier.NotifyChanged(matchId);
+        notifier.NotifyChanged(matchId, MatchStateMapper.ToDto(match));
 
         return OperationResult.Success();
     }

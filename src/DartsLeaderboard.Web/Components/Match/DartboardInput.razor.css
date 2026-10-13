@@ -91,9 +91,13 @@
 }
 
 .dartboard-ring-choice {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 8px;
+}
+
+.dartboard-ring-choice.is-open {
+    display: flex;
 }
 
 .dartboard-ring-choice ::deep .mud-button-root {

@@ -115,7 +115,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         await Reload();
-        _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(OnMatchChangedAsync));
+        Subscribe();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -129,14 +129,19 @@ else
         await JS.InvokeVoidAsync("dartsSpeech.setEnded", _speechRef);
     }
 
-    private async Task OnMatchChangedAsync()
+    private void Subscribe()
     {
-        if (_subscription is null)
+        _subscription = Notifier.Subscribe(MatchId, state => InvokeAsync(() => ApplyRemoteState(state)));
+    }
+
+    private void ApplyRemoteState(MatchStateDto state)
+    {
+        if (_subscription is null || ReferenceEquals(_state, state))
         {
             return;
         }
 
-        await Reload();
+        _state = state;
         StateHasChanged();
     }
 
@@ -221,7 +226,7 @@ else
         var result = await AbandonMatch.ExecuteAsync(MatchId);
         if (!result.IsSuccess)
         {
-            _subscription = Notifier.Subscribe(MatchId, () => InvokeAsync(OnMatchChangedAsync));
+            Subscribe();
             Snackbar.Add(result.ErrorMessage!, Severity.Error);
             return;
         }

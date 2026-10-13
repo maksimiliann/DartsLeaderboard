@@ -59,6 +59,13 @@ public static class DartboardScoring
     }
 }
 
+public sealed class DartHitPayload
+{
+    public int Points { get; set; }
+
+    public bool IsDouble { get; set; }
+}
+
 public enum X01VisitResult
 {
     Continue,

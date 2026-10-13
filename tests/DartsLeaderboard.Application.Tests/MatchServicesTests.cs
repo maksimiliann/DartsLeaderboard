@@ -61,6 +61,7 @@ public class MatchServicesTests
         Assert.True(result.IsSuccess);
         Assert.Equal(60, result.Value!.Rows[0].Cells[0].Points);
         Assert.Equal(new[] { match.Id }, _notifier.Notifications);
+        Assert.Same(result.Value, _notifier.States.Single());
         Assert.Equal(1, _matches.SaveCount);
     }
 
@@ -130,6 +131,7 @@ public class MatchServicesTests
         Assert.True(result.IsSuccess);
         Assert.Empty(match.Throws);
         Assert.Equal(new[] { match.Id }, _notifier.Notifications);
+        Assert.Same(result.Value, _notifier.States.Single());
     }
 
     [Fact]
