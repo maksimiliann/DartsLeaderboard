@@ -91,14 +91,12 @@
                         fill="#e53935" stroke="#ffffff" stroke-width="1.25">
                     <title>Дротик @marker.Number</title>
                 </circle>
-                <SvgText Class="dartboard-hit-label" X="@marker.X" Y="@marker.Y" Fill="#ffffff">@marker.Number</SvgText>
             }
 
             @for (var number = 1; number <= 3; number++)
             {
                 <g data-hit-slot="@number" visibility="hidden" pointer-events="none">
                     <circle class="dartboard-hit" cx="@F(DartboardLayout.Cx)" cy="@F(DartboardLayout.Cy)" r="6.5" />
-                    <SvgText Class="dartboard-hit-label" X="@F(DartboardLayout.Cx)" Y="@F(DartboardLayout.Cy)" Fill="#ffffff">@number</SvgText>
                 </g>
             }
         </svg>

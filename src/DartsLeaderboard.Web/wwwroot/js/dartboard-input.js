@@ -263,15 +263,9 @@ window.dartboardInput = (function () {
                 const y = format(position.y);
                 slot.setAttribute("visibility", "visible");
                 const circle = slot.querySelector("circle");
-                const text = slot.querySelector("text");
                 if (circle) {
                     circle.setAttribute("cx", x);
                     circle.setAttribute("cy", y);
-                }
-
-                if (text) {
-                    text.setAttribute("x", x);
-                    text.setAttribute("y", y);
                 }
             }
 

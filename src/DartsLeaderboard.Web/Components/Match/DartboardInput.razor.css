@@ -70,14 +70,6 @@
     pointer-events: none;
 }
 
-::deep .dartboard-hit-label {
-    fill: #ffffff;
-    font-size: 9px;
-    font-weight: 700;
-    pointer-events: none;
-    user-select: none;
-}
-
 .dartboard-sector-target {
     fill: transparent;
     stroke: transparent;
